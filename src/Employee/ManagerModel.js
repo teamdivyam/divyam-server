@@ -21,12 +21,14 @@ const MangerSchema = new Schema({
     dob: { type: Date, required: true },
     pinCode: { type: Number, required: true },
     address: { type: String, required: true },
-    assignedSupervisors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Supervisor" }],
-
-    // to manage particular area 
+    // to manage particular area-
     assignedPinCodes: {
         type: [{ type: mongoose.Schema.Types.ObjectId, ref: "areaZone" }],
         required: true
+    },
+
+    assignedSuperVisor: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: "supervisor" }],
     },
 
     role: {

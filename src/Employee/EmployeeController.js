@@ -16,6 +16,8 @@ import jwt from "jsonwebtoken";
 import SuperVisorModel from './SupervisorModel.js';
 import Joi from 'joi';
 import areaPinModel from '../AreaZone/areaPinCodeModel.js';
+import mongoose from 'mongoose';
+
 
 const AUTH_SCHEMA_VALIDATION = Joi.object({
     role: Joi.string().valid('manager', 'supervisor'),
@@ -170,7 +172,8 @@ const QUERY_VALIDATION = Joi.object({
     role: Joi.string().valid('manager', 'supervisor').required(),
     page: Joi.number().positive().required(),
     limit: Joi.number().positive().required(),
-})
+});
+
 const GET_EMPLOYEE = async (req, res, next) => {
     const { error, value } = QUERY_VALIDATION.validate(req.query);
 
@@ -180,13 +183,14 @@ const GET_EMPLOYEE = async (req, res, next) => {
 
     const page = value.page || 1;
     const limit = value.limit || 1;
+
     const skip = (page - 1) * limit;
 
     try {
         const [manager, supervisor] = await Promise.all([
             ManagerModel.find({ role: value.role },
-                { password: 0, assignedPinCodes: 0, assignedSupervisors: 0, updatedAt: 0, __v: 0, address: 0, profile: 0 }).skip(skip).limit(limit),
-            SuperVisorModel.find({ role: value.role }, { password: 0, assignedPinCodes: 0, assignedSupervisors: 0, updatedAt: 0, __v: 0, address: 0, profile: 0, orders: 0 }).skip(skip).limit(limit)
+                { password: 0, assignedPinCodes: 0, assignedSupervisors: 0, updatedAt: 0, __v: 0, profile: 0 }).skip(skip).limit(limit),
+            SuperVisorModel.find({ role: value.role }, { password: 0, assignedPinCodes: 0, assignedSupervisors: 0, updatedAt: 0, __v: 0, profile: 0, orders: 0 }).skip(skip).limit(limit)
         ]);
 
         const employees = [...manager, ...supervisor];
@@ -376,6 +380,71 @@ const GET_PROFILE = async (req, res, next) => {
     }
 }
 
+const objIdRegex = /^[a-fA-F0-9]{24}$/;
+
+const VALIDATE_OBJ_ID = Joi.object({
+    managerObjId: Joi.string().pattern(objIdRegex).required(),
+    superVisorObjId: Joi.string().pattern(objIdRegex).required(),
+})
+
+const SET_SUPERVISOR = async (req, res, next) => {
+    try {
+        const { error, value } = VALIDATE_OBJ_ID.validate(req.body);
+
+        if (error) {
+            return next(createHttpError(400, error?.details.at(0)?.message))
+        }
+        const managerObjId = value?.managerObjId;
+        const supervisorId = new mongoose.Types.ObjectId(value?.superVisorObjId);
+
+        const updatedManager = await ManagerModel.findByIdAndUpdate(
+            managerObjId,
+            { $addToSet: { assignedSuperVisor: supervisorId } },
+            { new: true } // Returns the fresh document
+        );
+
+
+        if (!updatedManager) {
+            return next(createHttpError(400, "Oops Something-went wrong."))
+        }
+
+        // set-manager-OBJECT_ID-inside-superVisor model
+        const superVisor = await SuperVisorModel.findByIdAndUpdate(supervisorId, {
+            manager: managerObjId
+        })
+
+        if (!superVisor) {
+            return next(createHttpError(400, "Plz try again later"))
+        }
+
+
+        return res.status(200).json({
+            statusCode: 400,
+            msg: "Successfully new supervisor added"
+        });
+    } catch (error) {
+        return next(createHttpError(400, error))
+    }
+}
+
+
+const GET_ALL_UNASSIGNED_SUPERVISORS = async (req, res, next) => {
+    try {
+        const getSuperVisors = await SuperVisorModel.find({
+            $or: [{ manager: { $exists: false } }]
+        }).select({ _id: 1, fullName: 1, address: 1 })
+
+        if (!getSuperVisors) {
+            return next(createHttpError(400, "something went wrong."))
+        }
+
+        return res.status(200).json(getSuperVisors);
+    } catch (error) {
+        return next(createHttpError(400, error))
+    }
+}
+
+
 export {
     NEW_EMPLOYEE,
     AUTH_EMPLOYEE,
@@ -384,4 +453,6 @@ export {
     DELETE_EMPLOYEE,
 
     GET_PROFILE,
+    SET_SUPERVISOR,
+    GET_ALL_UNASSIGNED_SUPERVISORS
 }

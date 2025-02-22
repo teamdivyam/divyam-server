@@ -10,8 +10,7 @@ import {
     SEARCH_ORDERS,
     SEARCH_USERS,
     VIEW_ADMIN_PROFILE
-}
-    from "../Admin/adminController.js";
+} from "../Admin/adminController.js";
 import {
     ADD_NEW_PACKAGE,
     DELETE_SINGLE_PACKAGE,
@@ -36,7 +35,7 @@ import {
     GET_SINGLE_AREA_ZONE,
     SET_NEW_AREA_ZONE,
     UPDATE_AREA_ZONE,
-    GET_ALL_PIN_CODES
+    GET_ALL_PIN_CODES,
 } from "../AreaZone/areaZoneController.js";
 
 import rateLimit from "express-rate-limit";
@@ -51,9 +50,11 @@ import {
 
 import {
     DELETE_EMPLOYEE,
+    GET_ALL_UNASSIGNED_SUPERVISORS,
     GET_EMPLOYEE,
     GET_SINGLE_EMPLOYEE,
-    NEW_EMPLOYEE
+    NEW_EMPLOYEE,
+    SET_SUPERVISOR
 } from "../Employee/EmployeeController.js";
 
 
@@ -108,10 +109,13 @@ AdminRoute.post('/employee', Upload.single("profile"), NEW_EMPLOYEE);
 AdminRoute.get('/employees', isAdmin, GET_EMPLOYEE); //get-all-employee
 AdminRoute.get('/employee/:EMP_ID', isAdmin, GET_SINGLE_EMPLOYEE);   //get-single-employee
 AdminRoute.delete('/employee/:EMP_ID', isAdmin, DELETE_EMPLOYEE);
+AdminRoute.post('/set-supervisor', SET_SUPERVISOR);
+AdminRoute.get('/get-all-unassigned-supervisor', GET_ALL_UNASSIGNED_SUPERVISORS);
 
 // DELIVERY partners
 AdminRoute.get('/agents', isAdmin, GET_DELIVERY_AGENTS); //get-all-delivery-agents
 AdminRoute.get('/agent/:AGENT_ID', GET_SINGLE_DELIVERY_AGENT) //get-single-agent
 AdminRoute.get('/search', SEARCH_AGENTS) // SEARCH AGENTS
 AdminRoute.delete('/agent/:AGENT_ID', DELETE_SINGLE_DELIVERY_AGENT); //delete-single-agent
+
 export default AdminRoute;

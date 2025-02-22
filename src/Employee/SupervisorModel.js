@@ -28,6 +28,6 @@ const superVisorSchema = new Schema({
     timestamps: true
 })
 
-const SuperVisorModel = mongoose.model('superVisor', superVisorSchema)
+const SuperVisorModel = mongoose.model('supervisor', superVisorSchema)
 
 export default SuperVisorModel

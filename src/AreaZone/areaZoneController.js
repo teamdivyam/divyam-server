@@ -81,7 +81,8 @@ import {
 
 const SET_NEW_AREA_ZONE = async (req, res, next) => {
     try {
-        const { error, value } = NEW__AREA__ZONE__VALIDATE__SCHEMA.validate(req.body)
+        const { error, value } = NEW__AREA__ZONE__VALIDATE__SCHEMA.validate(req.body);
+
         if (error) {
             return next(createHttpError(error?.details[0].message))
         }
