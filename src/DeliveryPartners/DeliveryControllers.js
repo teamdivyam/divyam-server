@@ -1,10 +1,46 @@
 import createHttpError from "http-errors";
 import Joi from "joi";
-
 import { DELIVERY_PARTNER_CREATE_PROFILE_VALIDATION }
     from "../validations/DeliveryPartners/index.js";
-
 import DeliveryPartnerModel from './DeliveryPartnerModel.js';
+
+const REGISTER_SCHEMA_VALIDATE = Joi.object({
+    fullName: Joi.string().trim().min(3).max(20).required(),
+    gender: Joi.string().trim().required(),
+    mobileNum: Joi.string().trim().length(10).required(),
+    dob: Joi.string().required(),
+    email: Joi.string().email().required(),
+    pinCode: Joi.string().length(6).required(),
+    address: Joi.string().trim().min(5).required(),
+});
+
+const REGISTER_DELIVERY_AGENTS = async () => {
+    try {
+        const { error, value } = REGISTER_SCHEMA_VALIDATE.validate(req.body)
+
+        if (error) {
+            return next(createHttpError(400, error?.details.at(0)?.message))
+        }
+        // check is agents exists or not
+        const isAgentExists = await DeliveryPartnerModel.findOne({
+            $or:
+                [
+                    { mobileNum: value.mobileNum },
+                    { email: new RegExp(`^${value.email}$`, "i") }
+                ]
+        });
+
+        if (!isAgentExists) {
+            return next(createHttpError(400, "Already registered"))
+        }
+
+        // if the agents is new Register 
+        const newDeliveryAgents = await DeliveryPartnerModel.create({})
+
+    } catch (error) {
+        return next(createHttpError(400, "Internal error"))
+    }
+}
 
 const LOG_IN_DELIVERY_PARTNERS = async (req, res, next) => {
     try {
@@ -42,7 +78,6 @@ const CREATE_PROFILE = async (req, res, next) => {
             return next(createHttpError(400, "agent is already exits"))
         }
 
-
         const newAgent = await DeliveryPartnerModel.create(value);
 
 
@@ -66,7 +101,7 @@ const GET_DELIVERY_AGENTS = async (req, res, next) => {
         const { error, value } = QUERY_PAGINATION_SCHEMA.validate(req.query);
 
         if (error) {
-            return next(createHttpError(400, "oops invalid request.."))
+            return next(createHttpError(400, error?.details.at(0)?.message))
         }
 
         const Page = value.page || 1;
@@ -123,6 +158,7 @@ const DELETE_SINGLE_DELIVERY_AGENT = async (req, res, next) => {
 }
 
 export {
+    REGISTER_DELIVERY_AGENTS,
     GET_SINGLE_DELIVERY_AGENT,
     GET_DELIVERY_AGENTS,
     LOG_OUT_DELIVERY_PARTNERS,

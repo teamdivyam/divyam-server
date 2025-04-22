@@ -1,5 +1,6 @@
 import express from "express";
-const DeliveryPartnersRoute = express.Router();
+
+const DeliveryAgentRoute = express.Router();
 
 import {
     CREATE_PROFILE,
@@ -8,6 +9,9 @@ import {
 // DeliveryPartnersRoute.get("/auth", LOG_IN_DELIVERY_PARTNERS);
 // DeliveryPartnersRoute.get("/logout", LOG_OUT_DLVRY_PARTNERS);
 
-DeliveryPartnersRoute.post("/profile", CREATE_PROFILE);
+// DeliveryAgentRoute.post('/register');
 
-export default DeliveryPartnersRoute
+DeliveryAgentRoute.post("/profile", CREATE_PROFILE);
+
+
+export default DeliveryAgentRoute

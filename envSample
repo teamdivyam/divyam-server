@@ -1,5 +1,8 @@
 FRONT_END_URL=
+ADMIN_DASHBORAD_URL=https://admindashboard-coral.vercel.app
+
 DB_URL=
+
 APP_PORT=
 
 USER_AUTH_SECRET=

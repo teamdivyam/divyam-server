@@ -6,7 +6,7 @@ const RegisterUserValidateSchema = Joi.object({
     email: Joi.string().email().max(100).required(),
     password: Joi.string().max(100).required(),
     confirmPassword: Joi.string().max(100).required(),
-})
+});
 
 // LogIn Schema for Admin Log-In...
 const AdminLoginValidateSchema = Joi.object({
@@ -28,6 +28,7 @@ const AdminLoginValidateSchema = Joi.object({
             'string.empty': 'Password is required.',
             'any.required': 'Password is required.',
         }),
+    recaptchaToken: Joi.string().min(3).required()
 });
 
 // CHANGE_ADMIN_PASSWORD

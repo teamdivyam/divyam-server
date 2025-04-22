@@ -1,6 +1,5 @@
 import Joi from "joi"
-
-const areaPinValidateRGX = /^[1-9]{1}[0-9]{5}$/;
+import { isAreaPin_SIX_DIGIT } from "../REGEX/index.js"
 
 const NEW__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
     state: Joi.string().trim().min(3).max(20).required().messages({
@@ -15,7 +14,7 @@ const NEW__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
             'string.base': 'District must be a string',
             'any.required': 'District is required'
         }),
-    areaPinCode: Joi.string().regex(areaPinValidateRGX).required()
+    areaPinCode: Joi.string().regex(isAreaPin_SIX_DIGIT).required()
         .messages({
             'string.empty': "Area Pincode must be a valid string",
             'string.base': 'Area Pincode must be a string',
@@ -40,6 +39,7 @@ const NEW__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
     }),
 })
 
+
 const GET__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
     state: Joi.string().trim().min(3).max(20).messages({
         'string.length': 'oops! Invalid entry',
@@ -53,7 +53,7 @@ const GET__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
             'string.base': 'District must be a string',
             'any.required': 'District is required'
         }),
-    areaPinCode: Joi.string().pattern(areaPinValidateRGX).required(),
+    areaPinCode: Joi.string().pattern(isAreaPin_SIX_DIGIT).required(),
     startDate: Joi.string().trim().message({
         'string.empty': "date can't be empty",
         'any.required': 'End Date is required',
@@ -69,6 +69,14 @@ const GET_ALL_AREA_ZONES_SCHEMA_VALIDATION = Joi.object({
     page: Joi.string().min(1).required(),
     limit: Joi.string().min(1),
 })
+
+
+
+const PIN_CODE_VERIFY_SCHEMA = Joi.object({
+    areaPinCode: Joi.string().pattern(isAreaPin_SIX_DIGIT).required()
+})
+
+
 
 
 // const SET_NEW_AREA_ZONE = async (req, res, next) => {
@@ -131,5 +139,6 @@ export {
     NEW__AREA__ZONE__VALIDATE__SCHEMA,
     GET__AREA__ZONE__VALIDATE__SCHEMA,
     GET_ALL_AREA_ZONES_SCHEMA_VALIDATION,
+    PIN_CODE_VERIFY_SCHEMA
     // SET_NEW_AREA_ZONE
 }

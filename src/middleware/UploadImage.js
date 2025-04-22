@@ -1,10 +1,8 @@
 import createHttpError from "http-errors";
 import UploadImageOnServer from "../utils/UploadImageOnServer.js";
-
 /*
 Middleware to Upload file on server
 */
-
 const UploadImage = async (req, res, next) => {
     try {
         if (!req.file) {

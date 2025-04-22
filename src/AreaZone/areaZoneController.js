@@ -1,7 +1,5 @@
 import createHttpError from 'http-errors';
-import Joi from 'joi';
 import AreaZoneModel from './areaZoneModel.js';
-import moment from 'moment-timezone';
 // regex for areaPinCode
 import logger from '../config/logger.js';
 
@@ -9,75 +7,12 @@ import {
     NEW__AREA__ZONE__VALIDATE__SCHEMA,
     GET__AREA__ZONE__VALIDATE__SCHEMA,
     GET_ALL_AREA_ZONES_SCHEMA_VALIDATION,
+    PIN_CODE_VERIFY_SCHEMA,
 } from "../validations/areaZone/index.js"
+import areaPinModel from './areaPinCodeModel.js';
+import moment from 'moment';
 
 
-// const DATE_REGEX = /^(((0[1-9]|[12]\d|3[01])\/(0[13578]|1[02])\/((19|[2-9]\d)\d{2}))|((0[1-9]|[12]\d|30)\/(0[13456789]|1[012])\/((19|[2-9]\d)\d{2}))|((0[1-9]|1\d|2[0-8])\/02\/((19|[2-9]\d)\d{2}))|(29\/02\/((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))))$/;
-
-
-//Area_zone_validate_schema
-// const NEW__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
-//     state: Joi.string().trim().min(3).max(20).required().messages({
-//         'string.length': 'oops! Invalid entry',
-//         'string.empty': 'state must be a valid string',
-//         'string.base': 'State must be a string',
-//         'any.required': 'State is required'
-//     }),
-//     district: Joi.string().trim().min(3).max(25).required()
-//         .messages({
-//             'string.empty': 'district must be a valid string',
-//             'string.base': 'District must be a string',
-//             'any.required': 'District is required'
-//         }),
-//     areaPinCode: Joi.string().regex(areaPinValidateRGX).required()
-//         .messages({
-//             'string.empty': "Area Pincode must be a valid string",
-//             'string.base': 'Area Pincode must be a string',
-//             'string.length': 'Area Pincode must be exactly 6 digits',
-//             'string.pattern.base': 'Area Pincode must start with a non-zero digit and be 6 digits long',
-//             'any.required': 'Area Pincode is required'
-//         }),
-//     startDate: Joi.date().iso().required().messages({
-//         'date.base': 'Start Date must be a valid date',
-//         'any.required': 'Start Date is required',
-//         'string.pattern.base': 'Start Date must be a valid date',
-//     }),
-//     endDate: Joi.string().trim().required().messages({
-//         'date.base': 'End Date must be a valid date',
-//         'any.required': 'End Date is required',
-//         'string.pattern.base': 'End Date must be a valid date',
-//     }),
-//     isAvailable: Joi.boolean().required().messages({
-//         'boolean.empty': 'isAvailable must be a valid string',
-//         'boolean.base': 'isAvailable must be a valid string',
-//         'boolean.required': 'isAvailable must be a valid string'
-//     }),
-// })
-
-
-// const GET__AREA__ZONE__VALIDATE__SCHEMA = Joi.object({
-//     state: Joi.string().trim().min(3).max(20).messages({
-//         'string.length': 'oops! Invalid entry',
-//         'string.empty': 'state must be a valid string',
-//         'string.base': 'State must be a string',
-//         'any.required': 'State is required'
-//     }),
-//     district: Joi.string().trim().min(3).max(25)
-//         .messages({
-//             'string.empty': 'district must be a valid string',
-//             'string.base': 'District must be a string',
-//             'any.required': 'District is required'
-//         }),
-//     areaPinCode: Joi.string().pattern(areaPinValidateRGX).required(),
-//     startDate: Joi.string().trim().message({
-//         'string.empty': "date can't be empty",
-//         'any.required': 'End Date is required',
-//     }),
-//     endDate: Joi.string().trim().messages({
-//         'string.empty': "date can't be empty",
-//         'any.required': 'End Date is required',
-//     }),
-// })
 
 const SET_NEW_AREA_ZONE = async (req, res, next) => {
     try {
@@ -107,8 +42,6 @@ const SET_NEW_AREA_ZONE = async (req, res, next) => {
             return next(createHttpError(401, "Area is already registered "))
         }
 
-
-
         // DATA 
         const prettyDATA = {
             areaPinCode: reqDATA?.areaPinCode,
@@ -134,29 +67,24 @@ const SET_NEW_AREA_ZONE = async (req, res, next) => {
     }
 }
 
-// http://localhost:3000/api/availability-check?state=Uttar Pradesh&district=Prayagraj&areaPinCode=212503&startDate=01/01/2025&endDate=01/01/2025
-
 const CHECK_AREA_STATUS = async (req, res, next) => {
     try {
-        const { state, district, startDate, endDate, areaPinCode } = req.query;
-        const { error, value } = GET__AREA__ZONE__VALIDATE__SCHEMA.validate(req.query);
+        const { error, value } = GET__AREA__ZONE__VALIDATE__SCHEMA.validate(req.body);
 
         if (error) {
             return next(createHttpError(400, `ERR_MSG${error?.details[0]?.message}`));
         }
 
-        if (!state || !district || !areaPinCode) {
-            return next(createHttpError(400, "Missing required query parameters"));
-        }
+        const { state, district, startDate, endDate, areaPinCode } = req.body;
 
         // build query
-        let searchQuery = { state, district, areaPinCode };
 
         let start = moment.tz(startDate, 'DD/MM/YYYY', 'Asia/Kolkata');
         let end = moment.tz(endDate, 'DD/MM/YYYY', 'Asia/Kolkata');
 
-        // let start = new Date(startDate)
-        // let end = new Date(endDate)
+
+        let searchQuery = { state, district, areaPinCode };
+
 
         if (!start.isValid() || !end.isValid()) {
             console.log('start or end is invalid');
@@ -177,20 +105,20 @@ const CHECK_AREA_STATUS = async (req, res, next) => {
         // MongoDB Query to check availability
         const isAvailable = await AreaZoneModel.find({
             startDate: { $lte: start },
-            endDate: { $gte: end }
+            endDate: { $gte: end },
+            areaPinCode: areaPinCode,
+            district: district
         });
 
         if (!isAvailable.length) {
             return next(createHttpError(404, "No results found"));
         }
 
-        logger.info(`New area search starts `)
 
         return res.status(200).json({
             success: true,
             responseStatus: 200,
-            msg: "Services are available in your zone",
-            // responseDATA: isAvailable
+            msg: "Services are available in your area",
         });
 
 
@@ -246,7 +174,6 @@ const UPDATE_AREA_ZONE = async (req, res, next) => {
         return next(createHttpError(401, `Internal error ${error?.message}`))
     }
 }
-
 
 const GET_ALL_AREA_ZONES = async (req, res, next) => {
     try {
@@ -343,6 +270,39 @@ const GET_ALL_PIN_CODES = async (req, res, next) => {
 }
 
 
+const PINCODE_VERIFY = async (req, res, next) => {
+    try {
+        const { error, value } = PIN_CODE_VERIFY_SCHEMA.validate(req.body);
+        if (error) {
+            return next(createHttpError(400, error?.details[0].message))
+        }
+
+        const { areaPinCode } = req.body;
+
+        const isPinCodeAvailable = await AreaZoneModel.findOne(
+            {
+                areaPinCode: areaPinCode,
+                isAvailable: true
+            }
+        );
+
+        if (isPinCodeAvailable) {
+            return next(createHttpError(400, "We haven’t reached your area yet, but we’re expanding soon!"));
+        }
+
+        // onSuccess
+        return res.status(200).json(
+            {
+                success: true,
+                msg: "Welcome! We’re happy to serve your area. Let’s get started!"
+            }
+        );
+
+    } catch (error) {
+        return next(createHttpError(400, "Something went wrong."))
+    }
+}
+
 export {
     CHECK_AREA_STATUS,
     SET_NEW_AREA_ZONE,
@@ -350,6 +310,7 @@ export {
     GET_ALL_AREA_ZONES,
     DELETE_AREA_ZONE,
     GET_SINGLE_AREA_ZONE,
-    GET_ALL_PIN_CODES
+    GET_ALL_PIN_CODES,
+    PINCODE_VERIFY
 }
 

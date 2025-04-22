@@ -6,7 +6,8 @@ import {
     VALIDATE_SEARCH_SCHEMA
 } from "../validations/admins/index.js"
 
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs";
+
 import createHttpError from "http-errors";
 import adminModel from '../Admin/adminModel.js'
 import { config } from "../config/_config.js";
@@ -20,6 +21,10 @@ import logger from "../config/logger.js";
 import Joi from "joi";
 
 import DeliveryPartnerModel from "../DeliveryPartners/DeliveryPartnerModel.js";
+import verifyRecaptcha from "../utils/verifyRecaptchaToken.js";
+import getPreSignedURL from "../services/getPreSignedUrl.js";
+import Order from "../Orders/orderModel.js";
+import moment from "moment";
 
 const RegisterAdmin = async (req, res, next) => {
     try {
@@ -85,9 +90,22 @@ const LoginAdmin = async (req, res, next) => {
         const { error, value } = AdminLoginValidateSchema.validate(req.body)
         // Validate body..
         if (error) {
+            logger.info(error)
             return next(createHttpError(401, `${error?.details[0]?.message}`))
         }
-        const reqData = value;
+        const reqData = value
+
+        // check-recaptcha-verification
+        const isValidRecaptchToken = await verifyRecaptcha(reqData.recaptchaToken);
+
+        if (!isValidRecaptchToken) {
+            return next(createHttpError(400, "reCAPTCHA failed or score too low"))
+        }
+        if (isValidRecaptchToken) {
+            logger.info('Log-in ADMIN-Recaptch-verification passed')
+        }
+
+
         // Check user exist in the DB or not..
         const isAdmin = await adminModel.findOne({ email: reqData.email });
 
@@ -156,14 +174,28 @@ const GET_ALL_USERS = async (req, res, next) => {
             return next(createHttpError(401, "Invalid request.."))
         }
 
-        const users = await userModel.find({}, { updatedAt: 0, __v: 0, accessToken: 0, createdAt: 0, id: 0 }).limit(limit).skip(skip)
+        const users = await userModel.find({}, { updatedAt: 0, __v: 0, accessToken: 0, createdAt: 0, id: 0 }).limit(limit).skip(skip).lean();
 
+        // map over array and insert prefix of cloudFront URL
+
+        const ALL_USERS = users.map((user) => {
+            var avatarURL;
+            if (user.avatar) {
+                avatarURL = `${config.CLOUDFRONT_PATH}/Uploads/users/${user.avatar}`;
+            }
+
+            return {
+                ...user,
+                avatar: avatarURL
+            }
+        })
 
         if (!users.length) {
             return next(createHttpError(401, "no records founds"))
         }
 
-        return res.status(200).json(users)
+
+        return res.status(200).json(ALL_USERS)
     } catch (error) {
         logger.error(`${error}, Error msg ${error.message}`)
         return next(createHttpError(401, error))
@@ -172,21 +204,25 @@ const GET_ALL_USERS = async (req, res, next) => {
 
 const GET_SINGLE_USERS = async (req, res, next) => {
     try {
-
         const USER_ID = req?.params?.USER_ID;
-
         if (!USER_ID) {
-            return next(createHttpError(401, "Unauthorized."))
+            return next(createHttpError(400, "Error  occurred.."))
         }
-        // { updatedAt: 0, __v: 0, accessToken: 0, createdAt: 0 }
 
-        const user = await userModel.findOne({ _id: USER_ID },
-            { updatedAt: 0, __v: 0, accessToken: 0, _id: 0, otp: 0 })
+        const user = await userModel.findById(USER_ID,
+            { updatedAt: 0, __v: 0, accessToken: 0, _id: 0, otp: 0 });
 
         if (!user) {
             return next(createHttpError(401, "Error occurred during fetching users..2"))
         }
-        // const join_date = formatDateTime(user.createdAt)
+
+        var avatarURL;
+        if (user.avatar) {
+            avatarURL = `${config.CLOUDFRONT_PATH}/Uploads/users/${user.avatar}`;
+        }
+
+        const userJoinedDate = moment(user.createdAt).format("DD-MM-YYYY");
+
         const prettyData = {
             fullName: user.fullName,
             gender: user.gender,
@@ -194,16 +230,19 @@ const GET_SINGLE_USERS = async (req, res, next) => {
             mobileNum: user.mobileNum,
             role: user.role,
             areaPin: user.areaPin,
-            age: user.age,
-            createdAt: user.createdAt
+            avatar: avatarURL,
+            dob: user.dob,
+            createdAt: userJoinedDate,
+            orders: user?.orders || null
         };
 
         return res.status(200).json(prettyData)
 
 
     } catch (error) {
+        console.log(error);
         logger.error(`${error}, Error msg ${error.message}`)
-        return next(createHttpError(401, "Unauthorized."))
+        return next(createHttpError(401, "Internal error please try again later.."))
     }
 }
 
@@ -241,7 +280,9 @@ const VIEW_ADMIN_PROFILE = async (req, res, next) => {
 
         const ADMIN_ID = req.user;
 
-        const admin = await adminModel.findById(ADMIN_ID, { updatedAt: 0, accessToken: 0, __v: 0 });
+        const admin = await adminModel.findById(ADMIN_ID, {
+            updatedAt: 0, accessToken: 0, __v: 0, password: 0, _id: 0
+        });
 
         if (!admin) {
             return next(createHttpError(401, "Invalid  Id"))
@@ -253,7 +294,6 @@ const VIEW_ADMIN_PROFILE = async (req, res, next) => {
         return next(createHttpError(401, "Error during fetching admin profile..3"))
     }
 }
-
 
 const CHANGE_ADMIN_PASSWORD = async (req, res, next) => {
     try {
@@ -352,9 +392,13 @@ const SEARCH_ORDERS = async (req, res, next) => {
         if (error) {
             return next(createHttpError(400, "Invalid request"))
         }
-        const reqDATA = value;
+        let SEARCH_KEY = value.searchKey;
 
-        const Order = await orderModel.findOne({ order_id: reqDATA.searchKey },
+        if (SEARCH_KEY.startsWith('order_')) {
+            SEARCH_KEY = value.searchKey.substring(6);
+        }
+
+        const Order = await orderModel.findOne({ orderId: `order_${SEARCH_KEY}` },
             { updatedAt: 0, __v: 0, order_id: 0, isPackage: 0, payment_method: 0, products: 0, total_amount: 0, createdAt: 0 });
 
         if (!Order) {
@@ -401,6 +445,125 @@ const SEARCH_AGENTS = async (req, res, next) => {
     }
 }
 
+const GET_PRESIGNED_URL = async (req, res, next) => {
+    try {
+        const fileType = 'image/png';
+        const { fileName } = req.body;
+
+        if (!fileName) {
+            return next(createHttpError(400, "Bad request please try again later."))
+        }
+
+        const signedUrl = await getPreSignedURL(config.BUCKET_NAME, fileName, fileType);
+
+        if (!signedUrl) {
+            return next(createHttpError(400, "something went wrong"))
+        }
+        // log data
+        // console.log(`ALL_IFNO`, signedUrl, "File-path", filePath, "fileType", fileType);
+
+        return res.status(200).json({
+            success: true,
+            url: signedUrl
+        })
+    } catch (error) {
+        logger.info(`Failed during genrating PreSigned URL ${error}`)
+        return next(createHttpError(400, "Something went wrong"))
+    }
+}
+
+
+const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
+    try {
+        // get-user-info
+        // get-order-info
+        const fetchOrder = await orderModel.find({}, { _id: 0 });
+
+        // on error
+        if (!fetchOrder || !fetchOrder.length) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+
+
+        const fetchUsers = await userModel.find();
+
+        // on error
+        if (!fetchUsers || !fetchUsers) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+
+        return res.json({
+            Orders: fetchOrder.length,
+            Users: fetchUsers.length
+        })
+
+    } catch (error) {
+        return next(createHttpError(400, "Internal error"))
+    }
+}
+
+const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
+    try {
+        const { ORDER_ID } = req.params;
+
+        const order = await orderModel.findById(ORDER_ID, { _id: 0, updatedAt: 0, __v: 0 })
+            .populate(
+                {
+                    path: "product",
+                    populate: {
+                        path: "productId",
+                        model: "Package",
+                        select: {
+                            name: 1,
+                            slug: 1,
+                            description: 1,
+                            capacity: 1,
+                            price: 1,
+                            productImg: 1
+                        },
+                        populate: {
+                            path: "productImg",
+                            model: "productsimg",
+                            select: {
+                                imagePath: 1,
+
+                            }
+                        }
+                    }
+                }
+            )
+            .populate(
+                {
+                    path: "customer",
+                    model: "User",
+                    select: {
+                        fullName: 1, gender: 1, email: 1, dob: 1, avatar: 1, address: 1, _id: 0
+                    }
+                }
+            )
+            .exec();
+
+
+        if (!order) {
+            return next(createHttpError(400, "Something went wrong."))
+        }
+
+        // response 
+        return res.status(200)
+            .json(
+                {
+                    success: true,
+                    order
+                }
+            )
+
+    } catch (error) {
+        console.log(error)
+        return next(createHttpError(400, "Something went wrong.."))
+    }
+}
+
+
 
 export {
     RegisterAdmin,
@@ -412,5 +575,8 @@ export {
     CHANGE_ADMIN_PASSWORD,
     SEARCH_USERS,
     SEARCH_ORDERS,
-    SEARCH_AGENTS
+    SEARCH_AGENTS,
+    GET_PRESIGNED_URL,
+    ADMIN_DASHBOARD_ANALYTICS,
+    VIEW_SINGLE_ORDER_ADMIN
 }

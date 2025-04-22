@@ -1,0 +1,35 @@
+import mongoose from "mongoose";
+
+const bookingSchema = new mongoose.Schema({
+    resourceId: { type: mongoose.Schema.Types.ObjectId, ref: "Package", required: true },  //packageId
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },   //customerId
+    orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    status: {
+        type: String,
+        enums: [
+            "Pending",
+            "Awaiting Payment",
+            "Confirmed",
+            "Cancelled",
+            "Refunded",
+            "Completed"
+        ],
+        default: "Pending",
+        index: true
+    },
+    cancellationPolicy: { type: String },
+}, { timestamps: true });
+
+const bookingModel = mongoose.model("booking", bookingSchema);
+
+// middleware
+bookingSchema.pre('save', (next) => {
+    console.log("START_DATE", this.startDate);
+    console.log("END_DATE", this.endDate);
+})
+
+
+
+export default bookingModel;

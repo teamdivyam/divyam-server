@@ -6,6 +6,7 @@ import app from "./app.js";
 // Set Default Port in case Of Failure
 const PORT = config.APP_PORT || 3002
 // Connect With Database
+
 try {
     connectDb();
 } catch (error) {
@@ -13,8 +14,8 @@ try {
 }
 
 
-
 // app Running on Defined PORT..
 app.listen(PORT, () => {
+    console.log(`http://localhost:${PORT}`);
     logger.info('App is running on Port', { port: PORT })
 })

@@ -3,7 +3,6 @@ import Counter from "./CounterModel.js";
 // preText DVYM || ORDERID_ || 
 
 async function generateOrderID(collectionName, preText) {
-
     const counter = await Counter.findOneAndUpdate(
         { name: collectionName },
         { $inc: { count: 1 } },

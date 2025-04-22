@@ -6,6 +6,7 @@ const areaZoneSchema = new Schema({
     areaPinCode: { type: Number, required: true },
     state: { type: String, required: true },
     district: { type: String, required: true },
+    serviceArea: { type: String },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     isAvailable: { type: Boolean, required: true }

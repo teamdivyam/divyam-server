@@ -6,6 +6,7 @@ import adminModel from "../Admin/adminModel.js";
 /*
 MISSING_TOKEN = ERR_DVYM_AUTH20
 */
+
 const isAdmin = async (req, res, next) => {
     try {
         const tokenHeader = req.headers['authorization'];
@@ -19,13 +20,12 @@ const isAdmin = async (req, res, next) => {
 
         const token = tokenHeader.split(" ").at(1);
 
-
         if (!token) {
             return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH22'))
         }
 
         // decode token and verify it from db Too.. 
-        // it could be costly operation but for sec it would be good fo initials days
+        // it could be costly operation
 
         const decodedToken = jwt.verify(token, config.ADMIN_SECRET)
         if (!decodedToken) {

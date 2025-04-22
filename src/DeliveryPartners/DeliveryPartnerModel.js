@@ -10,7 +10,10 @@ const DeliveryPartner = new mongoose.Schema({
     address: {
         type: String, required: true,
     },
-
+    supervisor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'supervisor'
+    },
     orders: [
         {
             orderId: {
@@ -19,13 +22,13 @@ const DeliveryPartner = new mongoose.Schema({
             }
         }
     ],
-
     delivery_counts: { type: Number },
     rating: { type: Number },
     phoneNum: { type: String, unique: true },
     status: { type: String, enum: ["available", "busy"], default: "available" },
+}, {
+    timestamps: true
 })
 
 const DeliveryPartnerModel = mongoose.model("DeliveryPartner", DeliveryPartner)
-
 export default DeliveryPartnerModel

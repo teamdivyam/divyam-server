@@ -46,6 +46,7 @@ const UploadImageOnServer = async (file, uploadDestinationPath) => {
         // getting these data from multer
         // prepare filename
         const fileName = `${destinationPath}/${Date.now()}-${file.originalname}`;
+
         const uploadParams = {
             Bucket: config.BUCKET_NAME,
             Key: fileName,

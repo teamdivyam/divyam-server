@@ -1,30 +1,59 @@
 import mongoose, { Schema } from "mongoose";
-
+import slugify from "slugify";
 
 const PackageSchema = new Schema({
-    id: { type: String, unique: true, require: true },
-    pkg_id: { type: String, unique: true, require: true },
-    name: { type: String, require: true, unique: true, },
+    pkg_id: { type: String, unique: true, required: true },
+    name: { type: String, required: true, unique: true, },
+    slug: { type: String, unique: true },
     description: { type: String, },
-    packageListTextItems: [],
-    images: {
-        type: String, require: true,
-    },
-    utensils: [
-        {
-            utensil_id: { type: String, },
-            name: { type: String, },
-            quantity: { type: Number, },
-        }
-    ]
-    ,
-    capacity: { type: String, require: true },
-    "price": { type: Number, require: true },
+    capacity: { type: String, required: true },
+    "price": { type: Number, required: true },
     "policy": { type: String, },
-    "status": { type: String, default: "Available" },
-    "notes": { type: String, },
+
+    packageListTextItems: [],
+
+    productImg: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "productsimg",
+            required: true
+        },
+    ],
+
+    productBannerImgs: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "productsimg",
+        required: true
+    }],
+
+    isVisible: {
+        type: Boolean,
+        default: true,
+        index: true
+    },
+
+    isFeatured: { type: Boolean, default: false },
+
+    rating: {
+        type: Number,
+        required: true
+    },
+
+    notes: { type: String, },
 }, { timestamps: true })
 
-const PackageModel = mongoose.model("PackageModel", PackageSchema);
+
+PackageSchema.pre("save", function (next) {
+
+    if (this.isModified("name")) {
+        this.slug = slugify(this.name, { lower: true, strict: true });
+    }
+
+    next();
+}
+);
+
+
+const PackageModel = mongoose.model("Package", PackageSchema);
 
 export default PackageModel

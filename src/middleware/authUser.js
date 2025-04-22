@@ -9,6 +9,7 @@ const authUser = async (req, res, next) => {
     if (!req_Headers || !req_Headers?.token) {
         return next(createHttpError(401, "Unauthorized"));
     }
+
     try {
         // also we will check for token expiry too..
 
@@ -18,16 +19,21 @@ const authUser = async (req, res, next) => {
         if (!decodeToken) {
             return next(createHttpError(401, "Unauthorize.."))
         }
-        /* 
 
-        */
         const isUserExists = await userModel.findById(decodeToken?.id);
-
         if (!isUserExists) {
             return next(createHttpError(401, "Unauthorized.."))
         }
 
-        req.user = isUserExists;
+
+        const attachUser = {
+            id: isUserExists._id,
+            role: isUserExists.role,
+            mobileNum: isUserExists.mobileNum
+        }
+
+        req.user = attachUser;
+
         // on success call next()
         next()
     } catch (error) {

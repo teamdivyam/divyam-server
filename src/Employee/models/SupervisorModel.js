@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
 const superVisorSchema = new Schema({
-    id: { type: String, require: true, unique: true },
     fullName: { type: String, required: true },
     gender: { type: String, enum: ['male', 'female', 'others'], required: true },
     mobileNum: { type: Number, unique: true, required: true },
