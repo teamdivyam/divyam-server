@@ -32,7 +32,7 @@ jobs:
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               sudo yum update -y || { echo "Update failed"; exit 1; }
-              sudo amazon-linux-extras install docker -y || { echo "Docker install failed"; exit 1; }
+              sudo yum install docker -y || { echo "Docker install failed"; exit 1; }
               sudo service docker start || { echo "Docker start failed"; exit 1; }
               sudo usermod -a -G docker ec2-user
               sudo chkconfig docker on
