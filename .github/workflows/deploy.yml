@@ -17,7 +17,7 @@ jobs:
           USER: ${{ secrets.EC2_USER }}
         run: |
           echo "$PRIVATE_KEY" > my-web-server.pem && chmod 600 my-web-server.pem
-          ssh -o StrictHostKeyChecking=no -i my-web-server.pem.pem ${USER}@${HOST} '
+          ssh -o StrictHostKeyChecking=no -i my-web-server.pem ${USER}@${HOST} '
           ssh -o StrictHostKeyChecking=no -i my-web-server.pem ${USER}@${HOST} 
           echo "Current directory: $(pwd)"
           echo "Listing home directory:"
