@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: whomahtab/divyamapp # Your Docker Hub image
+  DOCKER_IMAGE: whomahtab/divyamapp
   PORT: ${{ secrets.PORT }}
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
           chmod 600 deploy-key.pem
 
           # 2. Connect to EC2 and deploy
-          ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} << 'EOF'
+          ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} '
             # 3. Install Docker if not available
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
@@ -63,4 +63,4 @@ jobs:
             # 7. Confirm container is running
             sleep 10
             docker ps | grep my-app || { echo "Container not running"; exit 1; }
-          EOF
+          '
