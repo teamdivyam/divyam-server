@@ -8,7 +8,7 @@ env:
   DOCKER_IMAGE: whomahtab/divyamapp
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-  PORT: '3000' # Fixed syntax
+  PORT: ${{ secrets.PORT }} # Must be set in GitHub secrets
 
 jobs:
   deploy:
@@ -19,7 +19,6 @@ jobs:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
           HOST: ${{ secrets.EC2_HOST }}
           USER: ec2-user
-          # Add all required environment variables:
           DB_URL: ${{ secrets.DB_URL }}
           API_KEY: ${{ secrets.API_KEY }}
         run: |
@@ -27,38 +26,44 @@ jobs:
           echo "$PRIVATE_KEY" > deploy-key.pem
           chmod 600 deploy-key.pem
 
-          # 2. Deploy to EC2
-          ssh -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} '
-            # 3. Install Docker if missing
+          # 2. Deploy to EC2 with connection timeout
+          ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} '
+            # 3. Install Docker if missing (with error handling)
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
-              sudo yum update -y
-              sudo amazon-linux-extras install docker -y
-              sudo service docker start
+              sudo yum update -y || { echo "Update failed"; exit 1; }
+              sudo amazon-linux-extras install docker -y || { echo "Docker install failed"; exit 1; }
+              sudo service docker start || { echo "Docker start failed"; exit 1; }
               sudo usermod -a -G docker ec2-user
               sudo chkconfig docker on
-              # Allow docker commands without sudo (optional)
-              sudo chmod 666 /var/run/docker.sock
             fi
 
             # 4. Login to Docker Hub
-            echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+            echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin || { echo "Docker login failed"; exit 1; }
 
             # 5. Clean up previous container
             docker stop my-app || true
             docker rm my-app || true
 
-            # 6. Pull the latest image
-            docker pull $DOCKER_IMAGE
+            # 6. Pull the latest image (with retry logic)
+            for i in {1..3}; do
+              docker pull $DOCKER_IMAGE && break
+              sleep 5
+              [ $i -eq 3 ] && exit 1
+            done
 
-            # 7. Run new container
+            # 7. Run new container with health check
             docker run -d \
               --name my-app \
               --restart unless-stopped \
               -p $PORT:$PORT \
               -e NODE_ENV=production \
               -e PORT=$PORT \
-              -e DB_URL=$DB_URL \
-              -e API_KEY=$API_KEY \
-              $DOCKER_IMAGE
+              -e DB_URL="$DB_URL" \
+              -e API_KEY="$API_KEY" \
+              $DOCKER_IMAGE || { echo "Container failed to start"; exit 1; }
+
+            # 8. Verify container is running
+            sleep 10
+            docker ps | grep my-app || { echo "Container not running"; exit 1; }
           '
