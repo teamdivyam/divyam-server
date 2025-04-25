@@ -1,43 +1,50 @@
-name: Deploy Node App with Docker to EC2
+name: Deploy to EC2
 
 on:
   push:
-    branches:
-      - main # Or your deployment branch
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.CI_TOKEN }}
-
-      - name: Deploy and Run via Docker
+      - name: Deploy to EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+          HOST: ${{ secrets.EC2_HOST }}
+          USER: ${{ secrets.EC2_USER }}
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@<13.203.206.25> << 'EOF'
-            # Navigate to your app directory
-            cd /home/ec2-user/your-app-folder
-
-            # Pull latest code
-            git pull origin main
-
-            # Build Docker image
-            docker build -t my-node-app .
-
-            # Stop and remove any existing container
-            docker rm -f my-node-container || true
-
-            # Run new container on port 3000
-
-            docker run -d \
-             --name my-node-container \
-             -p 3000:3000 \
-             --env-file .prod.env \
-             my-node-app
-          EOF
+          echo "$PRIVATE_KEY" > my-web-server.pem && chmod 600 my-web-server.pem
+          ssh -o StrictHostKeyChecking=no -i my-web-server.pem.pem ${USER}@${HOST} '
+          ssh -o StrictHostKeyChecking=no -i my-web-server.pem ${USER}@${HOST} 
+          echo "Current directory: $(pwd)"
+          echo "Listing home directory:"
+          ls -la ~
+          echo "Installing Node.js..."
+          if ! command -v nvm &> /dev/null; then
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+          fi
+          nvm install node
+          echo "Installing PM2..."
+          if ! command -v pm2 &> /dev/null; then
+          npm install -g pm2
+          fi
+          REPO_URL="https://github.com/Whomahtab/divyam-backend-app.git"
+          BRANCH="main"
+          REPO_DIR="$HOME/divyam-main-app"
+          if [ -d "$REPO_DIR/.git" ]; then
+            cd "$REPO_DIR"
+            git pull origin "$BRANCH"
+          else
+            git clone "$REPO_URL" "$REPO_DIR"
+            cd "$REPO_DIR"
+          fi
+          cd "$REPO_DIR"
+          npm install
+          echo "Starting/restarting application..."
+          pm2 restart src/server.js || pm2 start src/server.js
+          '
