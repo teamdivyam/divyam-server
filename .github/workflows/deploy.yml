@@ -6,9 +6,7 @@ on:
 
 env:
   DOCKER_IMAGE: whomahtab/divyamapp
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
-  PORT: ${{ secrets.PORT }} # Must be set in GitHub secrets
+  PORT: ${{ secrets.PORT }}
 
 jobs:
   deploy:
@@ -26,9 +24,9 @@ jobs:
           echo "$PRIVATE_KEY" > deploy-key.pem
           chmod 600 deploy-key.pem
 
-          # 2. Deploy to EC2 with connection timeout
+          # 2. Connect to EC2 and deploy
           ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} '
-            # 3. Install Docker if missing (with error handling)
+            # 3. Install Docker if not available
             if ! command -v docker &> /dev/null; then
               echo "Installing Docker..."
               sudo yum update -y || { echo "Update failed"; exit 1; }
@@ -36,23 +34,22 @@ jobs:
               sudo service docker start || { echo "Docker start failed"; exit 1; }
               sudo usermod -a -G docker ec2-user
               sudo chkconfig docker on
+            else
+              echo "Docker is already installed."
             fi
 
-            # 4. Login to Docker Hub
-            echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin || { echo "Docker login failed"; exit 1; }
-
-            # 5. Clean up previous container
+            # 4. Stop and remove previous container (if any)
             docker stop my-app || true
             docker rm my-app || true
 
-            # 6. Pull the latest image (with retry logic)
+            # 5. Pull the latest Docker image (with retry)
             for i in {1..3}; do
               docker pull $DOCKER_IMAGE && break
               sleep 5
-              [ $i -eq 3 ] && exit 1
+              [ $i -eq 3 ] && { echo "Failed to pull image after 3 attempts"; exit 1; }
             done
 
-            # 7. Run new container with health check
+            # 6. Run the new container
             docker run -d \
               --name my-app \
               --restart unless-stopped \
@@ -63,7 +60,7 @@ jobs:
               -e API_KEY="$API_KEY" \
               $DOCKER_IMAGE || { echo "Container failed to start"; exit 1; }
 
-            # 8. Verify container is running
+            # 7. Confirm container is running
             sleep 10
             docker ps | grep my-app || { echo "Container not running"; exit 1; }
           '
