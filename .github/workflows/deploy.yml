@@ -1,0 +1,43 @@
+name: Deploy Node App with Docker to EC2
+
+on:
+  push:
+    branches:
+      - main # Or your deployment branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CI_TOKEN }}
+
+      - name: Deploy and Run via Docker
+        run: |
+          ssh -o StrictHostKeyChecking=no ec2-user@<13.203.206.25> << 'EOF'
+            # Navigate to your app directory
+            cd /home/ec2-user/your-app-folder
+
+            # Pull latest code
+            git pull origin main
+
+            # Build Docker image
+            docker build -t my-node-app .
+
+            # Stop and remove any existing container
+            docker rm -f my-node-container || true
+
+            # Run new container on port 3000
+
+            docker run -d \
+             --name my-node-container \
+             -p 3000:3000 \
+             --env-file .prod.env \
+             my-node-app
+          EOF
