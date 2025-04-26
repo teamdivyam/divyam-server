@@ -62,8 +62,8 @@ jobs:
             fi
 
             # 4. Stop and remove previous container (if any)
-            docker stop my-app || true
-            docker rm my-app || true
+            docker stop  $DOCKER_IMAGE || true
+            docker rm  $DOCKER_IMAGE || true
 
             # 5. Pull the latest Docker image (with debug output)
             echo 'Attempting to pull image: $DOCKER_IMAGE'
@@ -79,6 +79,7 @@ jobs:
             done
 
             # 6. Run the new container
+
             docker run -d \
               --name my-app \
               --restart unless-stopped \
