@@ -82,11 +82,7 @@ jobs:
             docker run -d \
               --name my-app \
               --restart unless-stopped \
-              -p $PORT:$PORT \
-              -e NODE_ENV=production \
-              -e PORT=$PORT \
-              -e DB_URL='$DB_URL' \
-              -e API_KEY='$API_KEY' \
+              --env-file prod.env
               '$DOCKER_IMAGE' || { echo 'Container failed to start'; exit 1; }
 
             # 7. Confirm container is running
