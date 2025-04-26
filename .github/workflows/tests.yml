@@ -1,0 +1,5 @@
+name: divyamapp
+
+variables:
+  - PORT:300
+  - API_URL:http://api.divyam.com
