@@ -61,6 +61,9 @@ jobs:
               echo 'Docker is already installed.'
             fi
 
+            # -4.0 Run as SUPER user
+            sudo su
+
             # 4. Stop and remove previous container (if any)
             docker stop  $DOCKER_IMAGE || true
             docker rm  $DOCKER_IMAGE || true
