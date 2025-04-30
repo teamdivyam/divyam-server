@@ -47,6 +47,8 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     endDate: Joi.date().required(),
 });
 
+
+
 /**
  * 
  * @param {
@@ -72,8 +74,18 @@ const NEW_ORDER = async (req, res, next) => {
         if (error) {
             return next(createHttpError(400, error?.details.at(0).message));
         }
-
         const { packageID, qty, startDate, endDate } = req.body;
+
+        console.log(`LOG_DATE_FORMAT: ${startDate}-${endDate}`);
+
+        console.log(
+            `
+            PACKAGEID: ${packageID},
+            QTY: ${qty},
+            startDate: ${startDate},
+            endDate: ${endDate}
+            `
+        );
 
         const startBookingDate = new Date(startDate)
         const endBookingDate = new Date(endDate)
@@ -123,7 +135,7 @@ const NEW_ORDER = async (req, res, next) => {
         }
 
         // Fetch package info
-        const Package = await PackageModel.findById(packageID);
+        const Package = await PackageModel.findById(packageID).lean();
 
         if (!Package) {
             return next(createHttpError(400, "Package not found"));
@@ -202,13 +214,16 @@ const NEW_ORDER = async (req, res, next) => {
         }
 
         // for booking slot available
-        const NEW_BOOKING = await bookingModel.create({
-            startDate: startBookingDate,
-            endDate: endBookingDate,
-            resourceId: packageID,
-            customerId: USER_ID,
-            orderId: INSERT_NEW_ORDER._id
-        });
+        const NEW_BOOKING = await bookingModel.create(
+            [{
+                startDate: startBookingDate,
+                endDate: endBookingDate,
+                resourceId: packageID,
+                customerId: USER_ID,
+                orderId: INSERT_NEW_ORDER[0]._id
+            }],
+            { session }
+        );
 
         if (!NEW_BOOKING) {
             await session.abortTransaction();
@@ -222,7 +237,7 @@ const NEW_ORDER = async (req, res, next) => {
         await session.commitTransaction();
 
         return res.status(201).json({
-            status: 200,
+            status: 201,
             message: "Order created successfully",
             orderId: razorpayOrder.id,
             amount: totalAmount,
@@ -230,9 +245,9 @@ const NEW_ORDER = async (req, res, next) => {
         });
 
     } catch (error) {
+        logger.info(error.message);
         await session.abortTransaction();
         return next(createHttpError(500, error));
-        logger.info(error);
     } finally {
         session.endSession();
     }

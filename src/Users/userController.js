@@ -46,6 +46,8 @@ const RegisterUser = async (req, res, next) => {
 
         // END-- SMS_API
 
+
+
         // USER MODEL...
         const isUserExists = await userModel.findOne({ mobileNum: reqDATA?.mobileNum })
 
