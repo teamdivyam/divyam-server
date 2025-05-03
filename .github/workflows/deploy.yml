@@ -86,7 +86,7 @@ jobs:
             # 6. Run the new container
 
             docker run -d \
-              -rm \
+              --rm \
               --network mongo-net \
               --name node-app \
               --restart unless-stopped \
