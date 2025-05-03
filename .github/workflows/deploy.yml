@@ -95,5 +95,5 @@ jobs:
 
             # 7. Confirm container is running
             sleep 10
-            docker ps | grep my-app || { echo 'Container not running'; exit 1; }
+            docker ps | grep  $DOCKER_IMAGE || { echo 'Container not running'; exit 1; }
           "
