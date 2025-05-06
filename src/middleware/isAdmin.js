@@ -33,21 +33,22 @@ const isAdmin = async (req, res, next) => {
         }
 
         // check token inside DB TO..
-        const admin = await adminModel.findById(decodedToken.id);
+        // const admin = await adminModel.findById(decodedToken.id);
 
-        if (!admin) {
-            return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH24'))
-        }
-        // Match Token For Verification too..
-        if (!admin.accessToken) {
-            return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH25'))
-        }
+        // if (!admin) {
+        //     return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH24'))
+        // }
 
-        // console.log("AUTH_TOKEN", admin.accessToken, "\n CLIENT_TOKEN =>", token);
-        if (admin.accessToken !== token) {
-            console.log("Inalid Token.");
-            return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH26'))
-        }
+        // // Match Token For Verification too..
+        // if (!admin.accessToken) {
+        //     return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH25'))
+        // }
+
+        // // console.log("AUTH_TOKEN", admin.accessToken, "\n CLIENT_TOKEN =>", token);
+        // if (admin.accessToken !== token) {
+        //     console.log("Inalid Token.");
+        //     return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH26'))
+        // }
         // On Success
         req.user = decodedToken.id;
         next()

@@ -4,7 +4,7 @@ config()
 const _config = {
     FRONTEND_URL: process.env.FRONT_END_URL,
     ADMIN_DASHBOARD_URL: process.env.ADMIN_DASHBORAD_URL,
-
+    PRODUCTION: process.env.PRODUCTION,
     APP_PORT: process.env.APP_PORT,
     DB_URL: process.env.DB_URL,
     OTP_RATE_LIMIT: process.env.RATE_LIMIT_OTP,
@@ -26,8 +26,11 @@ const _config = {
     RECAPTCHA_SECRET: process.env.RECAPTCHA_SECRET,
 
     CLOUDFRON_PATH: process.env.AWS_CLOUDFRONT_PATH,
-    GUEST_USERS_SECRET: process.env.GUEST_USERS_SECRET
-
+    GUEST_USERS_SECRET: process.env.GUEST_USERS_SECRET,
+    SHOW_ADMIN_REGISTER_PAGE: process.env.SHOW_ADMIN_REGISTER_PAGE,
+    ORGIN1: process.env.ORIGIN1,
+    ORGIN2: process.env.ORIGIN2,
+    ORGIN3: process.env.ORIGIN3,
 }
 
 export { _config as config }

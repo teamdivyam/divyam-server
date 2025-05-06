@@ -27,6 +27,12 @@ import Order from "../Orders/orderModel.js";
 import moment from "moment";
 
 const RegisterAdmin = async (req, res, next) => {
+    if (!config.SHOW_ADMIN_REGISTER_PAGE) {
+        return res.json(400).json({
+            msg: "Can not register at this moment"
+        })
+    }
+
     try {
         // validate Req Body..
         const { error, value } = RegisterUserValidateSchema.validate(req?.body);
@@ -95,18 +101,25 @@ const LoginAdmin = async (req, res, next) => {
         }
         const reqData = value
 
-        // check-recaptcha-verification
-        const isValidRecaptchToken = await verifyRecaptcha(reqData.recaptchaToken);
+        // check-recaptcha-verification-only-in-production
 
-        if (!isValidRecaptchToken) {
-            return next(createHttpError(400, "reCAPTCHA failed or score too low"))
+        if (config.PRODUCTION === true) {
+            const isValidRecaptchToken = await verifyRecaptcha(reqData.recaptchaToken);
+
+            if (!isValidRecaptchToken) {
+                return next(createHttpError(400, "reCAPTCHA failed or score too low"))
+            }
+
+            if (isValidRecaptchToken) {
+                logger.info('Log-in ADMIN-Recaptch-verification passed')
+            }
         }
-        if (isValidRecaptchToken) {
-            logger.info('Log-in ADMIN-Recaptch-verification passed')
-        }
 
 
-        // Check user exist in the DB or not..
+
+
+
+        // Check user exist in the DB 
         const isAdmin = await adminModel.findOne({ email: reqData.email });
 
         if (!isAdmin) {
@@ -124,15 +137,10 @@ const LoginAdmin = async (req, res, next) => {
             return next(createHttpError(401, "Please check your email and password.."))
         }
 
-        // check admin email and Pass is correct or not..
-        // if (isAdmin.password !== reqData.password) {
-        //     console.log(isAdmin.password, "___", reqData.password);
-        //     return next(createHttpError(401, "Please enter correct password.."))
-        // }
+        const payload = { id: isAdmin.id, role: isAdmin.role };
 
-
-        const payload = { id: isAdmin.id, role: isAdmin.role }
         const accessToken = jwt.sign(payload, config.ADMIN_SECRET)
+
         // Save Token Inside DB TOO..
         isAdmin.accessToken = accessToken;
         await isAdmin.save()
@@ -146,7 +154,7 @@ const LoginAdmin = async (req, res, next) => {
                 success: true,
                 token: accessToken,
             }
-        )
+        );
 
     } catch (error) {
         logger.error(`${error}, Error msg ${error.message}`)

@@ -22,8 +22,16 @@ app.use(helmet());
 app.disable('x-powered-by');
 app.set('trust proxy', true);
 
-const allowedOrigins = ['http://localhost:5175', config.FRONTEND_URL, config.ADMIN_DASHBOARD_URL,
-    'http://localhost:5173'];
+const allowedOrigins = [
+    config.FRONTEND_URL,
+    config.ADMIN_DASHBOARD_URL,
+    'http://localhost:5173',
+    config.ORGIN1,
+    config.ORGIN2,
+    config.ORGIN3,
+];
+
+console.log(allowedOrigins);
 
 app.use(
     cors({
