@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Sop running container
-        run: docker stop divyamserver
+        run: docker stop divyamserver || true
         shell: bash
 
       - name: Run Docker container prune
