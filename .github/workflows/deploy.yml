@@ -36,6 +36,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Sop running container
+        run: docker stop divyamserver
+        shell: bash
+
       - name: Run Docker container prune
         run: docker container prune -f
         shell: bash
