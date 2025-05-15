@@ -24,13 +24,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and tag Docker image
-        run: |
-          docker build -t $DOCKER_IMAGE .
-          docker tag $DOCKER_IMAGE $DOCKER_IMAGE:latest
-
-      - name: Push to Docker Hub
-        run: docker push $DOCKER_IMAGE
+      - name: Build and Push Docker Image for linux/amd64
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -66,34 +67,23 @@ jobs:
             sudo su
 
             # 4. Stop and remove previous container (if any)
-            docker stop  $DOCKER_IMAGE || true
-            docker rm  $DOCKER_IMAGE || true
+            docker stop divyamserver || true
+            docker rm  divyamserver || true
 
-            # 5. Pull the latest Docker image (with debug output)
-            echo 'Attempting to pull image: $DOCKER_IMAGE'
 
-            for i in {1..3}; do
-              if docker pull '$DOCKER_IMAGE':latest; then
-                echo 'Successfully pulled image'
-                break
-              else
-                echo 'Pull attempt $i failed'
-                sleep 5
-                [ \$i -eq 3 ] && { echo 'Failed to pull image after 3 attempts'; exit 1; }
-              fi
-            done
+            # Pull the latest Docker image (with debug output)
+            echo "Pulling latest image: $DOCKER_IMAGE"
+            docker pull '$DOCKER_IMAGE' || { echo 'Image pull failed'; exit 1; }
 
-            # 6. Run the new container
-
+            # Run the new container
             docker run -d \
+              --name divyamserver \
               --restart unless-stopped \
-              --name node-app \
-              --env-file prod.env \
+              --env-file /home/${USER}/prod.env \
               -p 3000:3000 \
               '$DOCKER_IMAGE' || { echo 'Container failed to start'; exit 1; }
 
-            # 7. Confirm container is running
+            # Confirm container is running
             sleep 10
-            docker ps | grep  $DOCKER_IMAGE || { echo 'Container not running'; exit 1; }
-            
-            EOF
+            docker ps | grep divyamserver || { echo 'Container not running'; exit 1; }
+          EOF
