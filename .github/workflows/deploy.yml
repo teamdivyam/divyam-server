@@ -80,7 +80,7 @@ jobs:
             # Run the new container
             docker run -d \
               --name divyamserver \
-              -rm \
+              --restart unless-stopped \
               --env-file /home/${USER}/prod.env \
               -p 3000:3000 \
               '$DOCKER_IMAGE' || { echo 'Container failed to start'; exit 1; }
