@@ -36,9 +36,10 @@ const RegisterAdmin = async (req, res, next) => {
     try {
         // validate Req Body..
         const { error, value } = RegisterUserValidateSchema.validate(req?.body);
-        // if (!req?.file) {
-        //     return next(createHttpError(400, "Failed to upload file  on server."))
-        // }
+
+        if (!req?.file) {
+            return next(createHttpError(400, "Failed to upload file  on server."))
+        }
 
         const reqBody = value;
         if (error) {
