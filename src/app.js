@@ -9,7 +9,6 @@ import AdminRoute from "./Routes/adminRoute.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 import { config } from "./config/_config.js";
 
-
 const app = express();
 
 app.use(express.json());
@@ -17,7 +16,6 @@ app.use(cookieParser());
 app.use(helmet());
 app.disable('x-powered-by');
 app.set('trust proxy', true);
-
 const allowedOrigins = [
     config.ORGIN1,
     config.ORGIN2,
