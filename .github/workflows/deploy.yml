@@ -32,6 +32,14 @@ jobs:
           push: true
           tags: ${{ env.DOCKER_IMAGE }}
 
+  prune_containers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Docker container prune
+        run: docker container prune -f
+        shell: bash
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
