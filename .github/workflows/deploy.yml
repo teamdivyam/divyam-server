@@ -1,12 +1,11 @@
-name: Deploy Docker Image to EC2 (Amazon Linux)
+name: Build and Deploy to EC2
 
 on:
   push:
     branches: [main]
 
 env:
-  DOCKER_IMAGE: whomahtab/divyamserver # Your Docker Hub image
-  PORT: ${{ secrets.PORT }}
+  DOCKER_IMAGE: whomahtab/divyamserver:latest # Your Docker Hub image
 
 jobs:
   build-and-push:
@@ -15,14 +14,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
 
       - name: Build and Push Docker Image for linux/amd64
         uses: docker/build-push-action@v5
@@ -35,41 +34,36 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    needs: build-and-push
     steps:
-      - name: Deploy to EC2
+      - name: Deploy to EC2 via SSH
         env:
           PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
           HOST: ${{ secrets.EC2_HOST }}
-          USER: ec2-user
-          DB_URL: ${{ secrets.DB_URL }}
-          API_KEY: ${{ secrets.API_KEY }}
+          USER: ${{ secrets.EC2_USER }}
         run: |
-          # 1. Create and secure SSH key
-          echo "$PRIVATE_KEY" > deploy-key.pem
-          chmod 600 deploy-key.pem
+          echo "$PRIVATE_KEY" > key.pem
+          chmod 600 key.pem
 
-          # 2. Connect to EC2 and deploy with all variables explicitly passed
-          ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -i deploy-key.pem ${USER}@${HOST} "
-            # 3. Install Docker if not available
+          ssh -o StrictHostKeyChecking=no -i key.pem ${USER}@${HOST} << EOF
+            echo "✅ Connected to EC2"
+
+            # Ensure Docker is installed
             if ! command -v docker &> /dev/null; then
               echo 'Installing Docker...'
-              sudo yum update -y || { echo 'Update failed'; exit 1; }
-              sudo yum install docker -y || { echo 'Docker install failed'; exit 1; }
-              sudo service docker start || { echo 'Docker start failed'; exit 1; }
-              sudo usermod -a -G docker ec2-user
+              sudo yum update -y
+              sudo yum install docker -y
+              sudo service docker start
+              sudo usermod -a -G docker $USER
               sudo chkconfig docker on
             else
               echo 'Docker is already installed.'
+              sudo service docker start
             fi
 
-            # -4.0 Run as SUPER user
-
-            sudo su
-
-            # 4. Stop and remove previous container (if any)
-            docker stop divyamserver || true
-            docker rm  divyamserver || true
-
+            # Stop and remove previous container (if any)
+            # docker stop divyamserver || true
+            # docker rm divyamserver || true
 
             # Pull the latest Docker image (with debug output)
             echo "Pulling latest image: $DOCKER_IMAGE"
