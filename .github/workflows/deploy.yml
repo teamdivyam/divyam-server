@@ -86,7 +86,7 @@ jobs:
             # 6. Run the new container
 
             docker run -d \
-              --rm \
+              --restart unless-stopped \
               --name node-app \
               --env-file prod.env \
               -p 3000:3000 \
@@ -95,4 +95,5 @@ jobs:
             # 7. Confirm container is running
             sleep 10
             docker ps | grep  $DOCKER_IMAGE || { echo 'Container not running'; exit 1; }
-          "
+            
+            EOF
