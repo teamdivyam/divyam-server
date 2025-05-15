@@ -1,7 +1,6 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import authUser from "../middleware/authUser.js";
-
 import {
     GUEST_USER,
     LOGOUT_USER,
@@ -39,7 +38,7 @@ import { config } from "../config/_config.js";
 import isGuestUser from "../middleware/isGuestUser.js";
 
 const limitOTP = rateLimit({
-    windowMs: 60 * 60 * 1000, //1hr
+    windowMs: 60000 * 30,
     max: config.OTP_RATE_LIMIT,
     standardHeaders: 'true',
     legacyHeaders: false,
@@ -70,6 +69,7 @@ Route.get('/user/orders', authUser, GET_ALL_ORDERS_BY_USER_ID);  //req.user-All_
 Route.get('/user/order/:ORDER_ID', authUser, GET_SINGLE_ORDERS);  //Single_Orders
 Route.get('/user/order-cancel/:ORDER_ID', authUser, ORDER_CANCEL);  //cancel-order
 Route.post('/availability-check', CHECK_AREA_STATUS);
+
 Route.post('/check-pincode', PINCODE_VERIFY);
 
 // Route.post('/new-order', authUser, NEW_ORDER);
@@ -79,6 +79,7 @@ Route.post('/verify-payments', verifyPayments);
 //call guest api when user visit for the first time 
 Route.post('/session/guest', isGuestUser, GUEST_USER);
 Route.post('/user/save-cart', isGuestUser, SAVE_CART);
+
 
 // LOG-out-user
 Route.get('/logout', authUser, LOGOUT_USER)

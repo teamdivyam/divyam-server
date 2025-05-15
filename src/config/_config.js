@@ -28,6 +28,7 @@ const _config = {
     CLOUDFRON_PATH: process.env.AWS_CLOUDFRONT_PATH,
     GUEST_USERS_SECRET: process.env.GUEST_USERS_SECRET,
     SHOW_ADMIN_REGISTER_PAGE: process.env.SHOW_ADMIN_REGISTER_PAGE,
+
     ORGIN1: process.env.ORIGIN1,
     ORGIN2: process.env.ORIGIN2,
     ORGIN3: process.env.ORIGIN3,

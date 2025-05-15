@@ -284,7 +284,7 @@ const PINCODE_VERIFY = async (req, res, next) => {
                 areaPinCode: areaPinCode,
                 isAvailable: true
             }
-        );
+        ).lean();
 
         if (isPinCodeAvailable) {
             return next(createHttpError(400, "We haven’t reached your area yet, but we’re expanding soon!"));

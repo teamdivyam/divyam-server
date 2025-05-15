@@ -49,6 +49,7 @@ const isAdmin = async (req, res, next) => {
         //     console.log("Inalid Token.");
         //     return next(createHttpError('401', 'Unauthorized-access|ERRDVYM_AUTH26'))
         // }
+
         // On Success
         req.user = decodedToken.id;
         next()

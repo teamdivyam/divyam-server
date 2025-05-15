@@ -7,11 +7,8 @@ import userModel from '../Users/userModel.js';
 import Razorpay from "razorpay";
 import mongoose from "mongoose";
 import OrderModel from "./orderModel.js";
-import { populate } from "dotenv";
 const isObjectId = /^[0-9a-fA-F]{24}$/;
-import { nanoid } from "nanoid/non-secure";
 import generateOrderID from "../Counter/counterController.js";
-import areaPinModel from "../AreaZone/areaPinCodeModel.js";
 import AreaZoneModel from "../AreaZone/areaZoneModel.js";
 import logger from "../config/logger.js";
 import moment from "moment";
@@ -701,8 +698,6 @@ const ORDER_CANCEL = async (req, res, next) => {
 }
 
 
-
-
 const SAVE_CART = async (req, res, next) => {
     try {
         const { error, value } = TRACK_CART_SCHEMA_VALIDATOR.validate(req.body);
@@ -740,9 +735,20 @@ const SAVE_CART = async (req, res, next) => {
     }
 }
 
+
+
+
+
+
 export {
-    NEW_ORDER, GET_ALL_ORDERS_BY_USER_ID, GET_SINGLE_ORDERS, GET_ALL_ORDERS, CHANGE_ORDER_STATUS, GET_FILTERED_ORDER,
+    NEW_ORDER,
+    GET_ALL_ORDERS_BY_USER_ID,
+    GET_SINGLE_ORDERS,
+    GET_ALL_ORDERS,
+    CHANGE_ORDER_STATUS,
+    GET_FILTERED_ORDER,
     verifyPayments,
     ORDER_CANCEL,
-    SAVE_CART
+    SAVE_CART,
+
 }

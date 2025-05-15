@@ -59,11 +59,13 @@ import {
 } from "../Employee/controller/EmployeeController.js";
 
 const AdminRoute = express.Router();
+
 // SET_RATE_LIMIT_FOR_ADMIN_LOGIN
+
 const limitAdminLogin = rateLimit({
-    windowMs: 900000,  // 10 minutes
-    max: 10,
-    message: '👋👋..',
+    windowMs: 6000 * 30,  // 30 minutes
+    max: 20,
+    message: 'Please try agian later',
 })
 
 // Routes For Admin..

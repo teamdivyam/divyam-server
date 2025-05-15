@@ -4,7 +4,7 @@ import logger from "./logger.js";
 
 const connectDb = async () => {
     try {
-        // mongoose.set("debug", true);
+        mongoose.set("debug", true);
         const db = await mongoose.connect(config.DB_URL);
         logger.info("Database Connected Successfully..")
     } catch (error) {

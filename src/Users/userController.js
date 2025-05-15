@@ -34,6 +34,11 @@ const RegisterUser = async (req, res, next) => {
         }
         const reqDATA = value;
 
+        /**
+         *  Generate OTP
+         * 
+         */
+
         const newOtp = generateOtp(4);
 
         // SEND OTP THROUGH  SMS_API
@@ -65,6 +70,7 @@ const RegisterUser = async (req, res, next) => {
             return res.json(
                 {
                     success: true,
+                    ops: newOtp
                 }
             )
 
@@ -72,14 +78,14 @@ const RegisterUser = async (req, res, next) => {
 
         // FOR EXISTING USERS..
         try {
-            const UserOtp = await otpModel.create({ otp: newOtp, userId: isUserExists._id, isVerified: false });
-
+            const UserOtp = await otpModel.create({ otp: newOtp, userId: isUserExists._id });
             isUserExists.otp = UserOtp._id;
 
             await isUserExists.save();
 
             return res.status(200).json({
                 success: true,
+                otp: newOtp
             });
         } catch (error) {
             return next(createHttpError(401, "Something went wrong.."))

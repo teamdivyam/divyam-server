@@ -77,64 +77,6 @@ const PIN_CODE_VERIFY_SCHEMA = Joi.object({
 })
 
 
-
-
-// const SET_NEW_AREA_ZONE = async (req, res, next) => {
-//     try {
-//         const { error, value } = NEW__AREA__ZONE__VALIDATE__SCHEMA.validate(req.body)
-//         if (error) {
-//             return next(createHttpError(error?.details[0].message))
-//         }
-
-//         const reqDATA = value;
-
-
-//         const start = new Date(reqDATA?.startDate)
-//         const end = new Date(reqDATA?.endDate)
-
-
-//         const query = {
-//             areaPinCode: reqDATA?.areaPinCode,
-//             state: reqDATA?.state,
-//             district: reqDATA?.district,
-//             startDate: start,
-//             endDate: end,
-//         }
-
-//         const AreaZone = await AreaZoneModel.find(query);
-
-//         if (AreaZone.length > 0) {
-//             return next(createHttpError(401, "Area is already registered "))
-//         }
-
-
-
-//         // DATA 
-//         const prettyDATA = {
-//             areaPinCode: reqDATA?.areaPinCode,
-//             state: reqDATA?.state,
-//             district: reqDATA?.district,
-//             startDate: start,
-//             endDate: end,
-//             "isAvailable": reqDATA?.isAvailable
-//         }
-
-
-
-//         const newAreaZone = await AreaZoneModel.create(prettyDATA)
-
-//         if (!newAreaZone) {
-//             return next(createHttpError(401, "invalid request."))
-//         }
-
-
-//         res.status(201).json({ success: true, msg: "Successfully new area zone is created." })
-//     } catch (error) {
-//         return next(createHttpError(400, `Invalid requests || ${error}`))
-//     }
-// }
-
-
 export {
     NEW__AREA__ZONE__VALIDATE__SCHEMA,
     GET__AREA__ZONE__VALIDATE__SCHEMA,
