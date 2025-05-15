@@ -74,8 +74,8 @@ jobs:
             fi
 
             # Stop and remove previous container (if any)
-            # docker stop divyamserver || true
-            # docker rm divyamserver || true
+             docker stop divyamserver || true
+             docker rm divyamserver || true
 
             # Pull the latest Docker image (with debug output)
             echo "Pulling latest image: $DOCKER_IMAGE"
