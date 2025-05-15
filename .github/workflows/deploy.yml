@@ -87,7 +87,6 @@ jobs:
 
             docker run -d \
               --rm \
-              --network mongo-net \
               --name node-app \
               --env-file prod.env \
               -p 3000:3000 \
