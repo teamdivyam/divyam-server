@@ -65,7 +65,6 @@ const RegisterUser = async (req, res, next) => {
 
             newOTP.userId = user._id;
             await newOTP.save()
-
             // For New Users send  Response..
             return res.json(
                 {
@@ -294,9 +293,7 @@ const WHOAMI = async (req, res, next) => {
 // Validate SChema for OTP
 const VERIFY_OTP = async (req, res, next) => {
     /*
-     1 get mobile number and OTP from clint and validate it.
-     2 check for mobile isMobileNumber new ..
-     3   
+     1 get mobile number and OTP from clint and verify it.
     */
     try {
         // Validate request body
@@ -337,19 +334,15 @@ const VERIFY_OTP = async (req, res, next) => {
         }
 
         // ON Success..
-        // // send auth User Id to frontend for Verification
-        // // along with simple response we will also. send Token for AUTH..
+        const token = jwt.sign({ id: user._id, role: user.role }, config.USER_SECRET,
+            { expiresIn: "7d" });
 
-        const token = jwt.sign({ id: user._id, role: user.role }, config.USER_SECRET)
         user.accessToken = token;
-
         // validate otp in the OTP_DB for validation
         Otp.isVerified = true;
-
         await Otp.save()
         await user.save();
 
-        // Save Token inside Db Too..
 
         // SEND COOKIES -
         const COOKIES_CONFIG = {
@@ -365,11 +358,8 @@ const VERIFY_OTP = async (req, res, next) => {
         return res.status(200).json({
             success: "true",
             msg: "OTP verified successfully",
-            accessToken: token
         });
 
-        // On Success 
-        // Delete OTP FROM DB TO..
     } catch (error) {
         console.error(error.message);
         next(createHttpError(500, `error occurred ${error}`));

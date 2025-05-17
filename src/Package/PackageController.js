@@ -5,6 +5,7 @@ import generateOrderID from "../Counter/counterController.js";
 
 // import UploadImage from '../services/UploadImage.js';
 // import deleteObject from "../utils/DeleteFileFromServer.js"
+
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
 import DeleteObject from "../services/DeleteFileFromServer.js";
 
@@ -18,7 +19,7 @@ import { config } from "../config/_config.js";
 
 // body Validate..
 const NEW__PKG__VALIDATE__SCHEMA = Joi.object({
-    name: Joi.string().min(3).max(300).required(),
+    name: Joi.string().min(3).max(150).required(),
     description: Joi.string().min(3).max(1200).required(),
     packageListTextItems: Joi.array().required(),
     capacity: Joi.number().positive().required(),
@@ -31,8 +32,8 @@ const NEW__PKG__VALIDATE__SCHEMA = Joi.object({
 })
 
 const UPDATE__PKG__VALIDATE_SCHEMA = Joi.object({
-    name: Joi.string().min(3).max(100),
-    description: Joi.string().min(3).max(500),
+    name: Joi.string().min(3).max(150),
+    description: Joi.string().min(3).max(1200),
     packageListTextItems: Joi.array().required(),
     capacity: Joi.number().positive().required(),
     price: Joi.number().positive().required(),
@@ -399,9 +400,6 @@ const GET_ALL_PACKAGE_FOR_USERS = async (req, res, next) => {
             .exec();
 
         // log package data for production
-
-        logger.info(Package)
-
         if (!Package || !Package.length) {
             return next(createHttpError(400, "Internal error"));
         }

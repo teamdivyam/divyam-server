@@ -9,6 +9,7 @@ import AdminRoute from "./Routes/adminRoute.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 import { config } from "./config/_config.js";
 
+
 const app = express();
 
 app.use(express.json());
@@ -58,7 +59,7 @@ const ipLimiter = rateLimit({
 });
 
 
-app.use(ipLimiter);
+// app.use(ipLimiter);
 app.use('/api', Route);
 app.use('/api/admin', AdminRoute);
 

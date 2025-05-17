@@ -57,24 +57,35 @@ import {
     SET_SUPERVISOR,
     UNSET_SUPERVISOR_FROM_MANAGER
 } from "../Employee/controller/EmployeeController.js";
+import { nanoid } from "nanoid";
 
 const AdminRoute = express.Router();
 
 // SET_RATE_LIMIT_FOR_ADMIN_LOGIN
-
-const limitAdminLogin = rateLimit({
+const LIMIT_ADMIN_LOGIN = rateLimit({
     windowMs: 6000 * 30,  // 30 minutes
     max: 20,
     message: 'Please try agian later',
-})
+
+    keyGenerator: (req) => {
+        const randomDigits = nanoid(10);
+        const clientId = `${req.ip}-${randomDigits}`;
+
+        console.log(`CLIENT_id=> ${clientId}`);
+        return clientId;
+    }
+});
 
 // Routes For Admin..
 AdminRoute.post('/register', Upload.single('avatar'), RegisterAdmin);
-AdminRoute.post('/login', limitAdminLogin, LoginAdmin);
+AdminRoute.post('/login', LIMIT_ADMIN_LOGIN, LoginAdmin);
 
 // AUTH ADMIN THEN PROCEED FOR THE NEXT TASK..
+
 // ANALYTICS
+
 AdminRoute.get('/analytics', isAdmin, ADMIN_DASHBOARD_ANALYTICS);
+
 // Packages  
 AdminRoute.post('/package', isAdmin, Upload.single("image"), ADD_NEW_PACKAGE);
 AdminRoute.get('/package', isAdmin, GET_ALL_PACKAGE);

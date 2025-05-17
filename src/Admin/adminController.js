@@ -103,7 +103,6 @@ const LoginAdmin = async (req, res, next) => {
         const reqData = value
 
         // check-recaptcha-verification-only-in-production
-
         if (config.PRODUCTION === true) {
             const isValidRecaptchToken = await verifyRecaptcha(reqData.recaptchaToken);
 
@@ -112,11 +111,9 @@ const LoginAdmin = async (req, res, next) => {
             }
 
             if (isValidRecaptchToken) {
-                logger.info('Log-in ADMIN-Recaptch-verification passed')
+                logger.info('ADMIN-Recaptch-verification passed')
             }
         }
-
-
 
 
 
@@ -128,9 +125,9 @@ const LoginAdmin = async (req, res, next) => {
         }
 
         // Check for Admin Email..
-        if (isAdmin.email !== reqData.email) {
-            return next(createHttpError(401, "Please enter correct email address..."))
-        }
+        // if (isAdmin.email !== reqData.email) {
+        //     return next(createHttpError(401, "Please enter correct email address..."))
+        // }
 
         const decodedPassword = await bcrypt.compare(reqData.password, isAdmin.password);
 
@@ -138,9 +135,9 @@ const LoginAdmin = async (req, res, next) => {
             return next(createHttpError(401, "Please check your email and password.."))
         }
 
-        const payload = { id: isAdmin.id, role: isAdmin.role };
+        const payload = { id: isAdmin._id, role: isAdmin.role };
 
-        const accessToken = jwt.sign(payload, config.ADMIN_SECRET)
+        const accessToken = jwt.sign(payload, config.ADMIN_SECRET, { expiresIn: "8h" });
 
         // Save Token Inside DB TOO..
         isAdmin.accessToken = accessToken;
