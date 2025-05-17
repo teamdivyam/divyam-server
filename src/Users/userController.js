@@ -103,7 +103,7 @@ const UPDATE_USER_VALIDATE_SCHEMA = Joi.object({
     gender: Joi.string().valid('male', 'female', 'others').required(),
     dob: Joi.date()
         .max(moment()
-            .subtract(18, 'years')
+            .subtract(19, 'years')
             .toDate())
         .required()
         .messages({
