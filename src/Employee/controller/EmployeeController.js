@@ -5,7 +5,7 @@ import createHttpError from "http-errors";
 import {
     NEW_EMPLOYEE_SCHEMA_VALIDATION,
     EMPLOYEE_LOG_IN_SCHEMA_VALIDATION
-} from "../../validations/employee/index.js";
+} from "../../validators/employee/index.js";
 
 import UploadImageOnServer from "../../services/UploadImageOnServer.js";
 import { config } from '../../config/_config.js';

@@ -1,7 +1,6 @@
 import sharp from "sharp";
 
 
-
 const handleImage = async (imageFile) => {
     try {
         const processImg = await sharp(imageFile.buffer)

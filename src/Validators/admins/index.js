@@ -64,12 +64,17 @@ const GET_ALL_USERS_SCHEMA_VALIDATION = Joi.object({
 const VALIDATE_SEARCH_SCHEMA = Joi.object(
     {
         searchKey: Joi.string().min(5).max(20).required()
-    })
+    });
+
+const SEARCH_AGENTS_VALIDATIONS_SCHEMA = Joi.object({
+    s: Joi.string().alphanum().min(3).max(20).required()
+});
 
 export {
     RegisterUserValidateSchema,
     AdminLoginValidateSchema,
     CHANGE_ADMIN_PASSWORD_SCHEMA_VALIDATION,
     GET_ALL_USERS_SCHEMA_VALIDATION,
-    VALIDATE_SEARCH_SCHEMA
+    VALIDATE_SEARCH_SCHEMA,
+    SEARCH_AGENTS_VALIDATIONS_SCHEMA
 }

@@ -1,6 +1,6 @@
 import createHttpError from 'http-errors';
 import AreaZoneModel from './areaZoneModel.js';
-// regex for areaPinCode
+
 import logger from '../config/logger.js';
 
 import {
@@ -8,7 +8,8 @@ import {
     GET__AREA__ZONE__VALIDATE__SCHEMA,
     GET_ALL_AREA_ZONES_SCHEMA_VALIDATION,
     PIN_CODE_VERIFY_SCHEMA,
-} from "../validations/areaZone/index.js"
+} from "../validators/areaZone/index.js"
+
 import areaPinModel from './areaPinCodeModel.js';
 import moment from 'moment';
 

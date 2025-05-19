@@ -1,26 +1,24 @@
 import createHttpError from "http-errors";
-import Joi from "joi";
 import userModel from './userModel.js'
 import otpModel from './otpSchema.js'
-import userRegisterSchema from "./userRegisterValidateSchema.js";
 import jwt from 'jsonwebtoken';
 import { config } from '../config/_config.js'
-import sendOTP from "../services/sendOTP.js"
 import { nanoid } from "nanoid";
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
-import handleImage from '../utils/handleImage.js';
 import generateOtp from "../utils/generateOtp.js";
 import moment from "moment";
 import { UAParser } from "ua-parser-js";
+import sendOTP from "../services/sendOTP.js"
 
 import {
     RegisterUserValidateSchema,
-    otpValidateSchema
-} from "../validations/users/index.js"
+    otpValidateSchema,
+    UPDATE_USER_VALIDATE_SCHEMA
+} from "../validators/users/index.js"
 
-import { isAreaPin_SIX_DIGIT } from "../validations/REGEX/index.js";
 
 import logger from "../config/logger.js";
+
 import isEmailUnique from "../utils/isEmailUnique.js";
 
 // Register User with Mobile Number..
@@ -98,24 +96,6 @@ const RegisterUser = async (req, res, next) => {
 }
 
 
-const UPDATE_USER_VALIDATE_SCHEMA = Joi.object({
-    fullName: Joi.string().min(3).max(30).required(),
-    gender: Joi.string().valid('male', 'female', 'others').required(),
-    dob: Joi.date()
-        .max(moment()
-            .subtract(19, 'years')
-            .toDate())
-        .required()
-        .messages({
-            'date.max': 'You must be at least 18 years old',
-            'any.required': 'Date of birth is required',
-        }),
-    email: Joi.string().email().label("email"),
-    address: Joi.string().min(20).max(200).label("Address"),
-    areaPinCode: Joi.string().pattern(isAreaPin_SIX_DIGIT).required().label("PinCode")
-});
-
-
 const UpdateUser = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
@@ -152,25 +132,20 @@ const UpdateUser = async (req, res, next) => {
             return next(createHttpError(400, "Opps! something went wrong please try again later."))
         }
 
-
         UPDATE_EXISTING_USER.isVerified = true;
-        await UPDATE_EXISTING_USER.save()
+        await UPDATE_EXISTING_USER.save();
 
         // onSuccess
-
         return res.status(200).json(
             {
                 success: true,
                 msg: "Profile updated successfully."
             }
         )
-
-
     } catch (error) {
         return next(createHttpError(400, `something went wrong please try again later ${error}`))
     }
 }
-
 
 const UPDATE_PROFILE_PICTURE = async (req, res, next) => {
     try {

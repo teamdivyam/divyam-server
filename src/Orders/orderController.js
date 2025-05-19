@@ -1,6 +1,5 @@
 import { config } from "../config/_config.js";
 import createHttpError from "http-errors";
-import Joi from "joi";
 import crypto from "crypto"
 import PackageModel from "../Package/PackageModel.js";
 import userModel from '../Users/userModel.js';
@@ -13,49 +12,28 @@ import AreaZoneModel from "../AreaZone/areaZoneModel.js";
 import logger from "../config/logger.js";
 import moment from "moment";
 import cartTrackingModel from "./cartTrackingModel.js";
-import { TRACK_CART_SCHEMA_VALIDATOR } from "../validations/Orders/index.js";
 import bookingModel from "./bookingModel.js";
+
+import {
+    TRACK_CART_SCHEMA_VALIDATOR,
+    VALIATE_ORDER_BODY_SCHEMA,
+    PAGINATION_SCHEMA_VALIDATOR,
+    UPDATE_ORDER_STATUS_VALIDATION_SCHEMA,
+    ALL_ORDER_SCHEMA_VALIDATION,
+    GET_FILTERED_ORDER_VALIDATION_SCHEMA,
+    IS_ORDER_ID
+} from "../Validators/Orders/index.js"
+
 
 var instance = new Razorpay({
     key_id: config.RZR_PAY_ID,
     key_secret: config.RZR_PAY_SCRT,
 });
 
-// create Orders
 
-/**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @description 
- * 
- * it takes two thing as a payload one is 
- * packageId another one is user ID that we 
- * get from middleware (req.users)
- * 
- * @returns 
- */
-
-const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
-    packageID: Joi.string().pattern(isObjectId).required(),
-    qty: Joi.number().positive().max(5).required(),
-    startDate: Joi.date().required(),
-    endDate: Joi.date().required(),
-});
-
-
-
-/**
- * 
- * @param {
- * packageID => ObjectId,
- * quantity => 2
- * } 
- * 
- */
-
+// Create Orders
 const NEW_ORDER = async (req, res, next) => {
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -363,10 +341,7 @@ const verifyPayments = async (req, res, next) => {
 //     }
 // }
 
-const PAGINATION_SHEMA_VALIDATOR = Joi.object({
-    page: Joi.string().trim().required(),
-    limit: Joi.string().trim().max(20).required()
-})
+
 
 
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
@@ -377,7 +352,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             return next(createHttpError(401, "Invalid request"))
         }
 
-        const { error, value } = PAGINATION_SHEMA_VALIDATOR.validate(req.query);
+        const { error, value } = PAGINATION_SCHEMA_VALIDATOR.validate(req.query);
 
         if (error) {
             return next(createHttpError(400, "Something went wrong."))
@@ -489,9 +464,7 @@ const GET_SINGLE_ORDERS = async (req, res, next) => {
 
 // Change Order Status of Orders
 
-const UPDATE_ORDER_STATUS_VALIDATION_SCHEMA = Joi.object({
-    status: Joi.string().trim().required()
-})
+
 
 const CHANGE_ORDER_STATUS = async (req, res, next) => {
     try {
@@ -526,10 +499,7 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
 
 // /items?page=${page}&limit=${limit}
 
-const ALL_ORDER_SCHEMA_VALIDATION = Joi.object({
-    page: Joi.string().min(1).required(),
-    limit: Joi.string(),
-});
+
 
 const GET_ALL_ORDERS = async (req, res, next) => {
     const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
@@ -560,26 +530,6 @@ const GET_ALL_ORDERS = async (req, res, next) => {
 }
 
 
-
-const GET_FILTERED_ORDER_VALIDATION_SCHEMA = Joi.object(
-    {
-        filterBy: Joi.string().trim().valid(
-            "Pending",
-            "Packed",
-            "Shipped",
-            "Delivered",
-            "Cancelled",
-            "Completed",
-            "Refunded",
-            "Failed",
-            "On Hold",
-            "Out for Delivery",
-            "CANCELLATION_REQUESTED"
-        ),
-        page: Joi.number().required(),
-        limit: Joi.number().required()
-    }
-)
 
 const GET_FILTERED_ORDER = async (req, res, next) => {
     try {
@@ -620,13 +570,6 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
     }
 }
 
-
-const IS_ORDER_ID = Joi.object({
-    ORDER_ID: Joi.string()
-        .regex(/^[0-9a-fA-F]{24}$/)
-        .message('Invalid Order id'),
-
-})
 
 
 const ORDER_CANCEL = async (req, res, next) => {
@@ -734,9 +677,6 @@ const SAVE_CART = async (req, res, next) => {
         return next(createHttpError(400, error));
     }
 }
-
-
-
 
 
 

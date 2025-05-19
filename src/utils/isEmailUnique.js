@@ -13,7 +13,7 @@ const isEmailUnique = async (email, userId) => {
         const existingUser = await userModel.findOne({
             email: email,
             _id: { $ne: userId } // Exclude the current user being updated
-        });
+        }).lean();
 
         if (existingUser) {
             return false;

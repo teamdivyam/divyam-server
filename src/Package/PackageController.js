@@ -3,49 +3,21 @@ import PackageModel from "./PackageModel.js";
 import createHttpError from "http-errors";
 import generateOrderID from "../Counter/counterController.js";
 
-// import UploadImage from '../services/UploadImage.js';
-// import deleteObject from "../utils/DeleteFileFromServer.js"
+import {
+    NEW__PKG__VALIDATE__SCHEMA,
+    UPDATE__PKG__VALIDATE_SCHEMA
+} from "../Validators/Package/index.js"
 
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
 import DeleteObject from "../services/DeleteFileFromServer.js";
 
 import handleImage from "../utils/handleImage.js";
 
-import moveFileFromOneFolderToAnother from "../services/moveFIleOnServer.js";
 import logger from "../config/logger.js";
 import productImgModel from "./productImgModle.js";
 import mongoose, { mongo, Mongoose } from "mongoose";
-import { config } from "../config/_config.js";
 
 // body Validate..
-const NEW__PKG__VALIDATE__SCHEMA = Joi.object({
-    name: Joi.string().min(3).max(150).required(),
-    description: Joi.string().min(3).max(1200).required(),
-    packageListTextItems: Joi.array().required(),
-    capacity: Joi.number().positive().required(),
-    price: Joi.number().positive().required(),
-    policy: Joi.string(),
-    notes: Joi.string(),
-    productBannerImgArr: Joi.array(),
-    productMainImgArr: Joi.array(),
-    rating: Joi.number().required()
-})
-
-const UPDATE__PKG__VALIDATE_SCHEMA = Joi.object({
-    name: Joi.string().min(3).max(150),
-    description: Joi.string().min(3).max(1200),
-    packageListTextItems: Joi.array().required(),
-    capacity: Joi.number().positive().required(),
-    price: Joi.number().positive().required(),
-    policy: Joi.string(),
-    notes: Joi.string(),
-    bannerImgs: Joi.array(),
-    productImgs: Joi.array(),
-    isFeaturedProduct: Joi.boolean().required(),
-    isVisible: Joi.boolean().required(),
-    rating: Joi.number().required()
-});
-
 const ADD_NEW_PACKAGE = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -317,7 +289,11 @@ const GET_ALL_FEATURED_PACKAGE = async (req, res, next) => {
 
 
 
-        const getFeaturedPackage = await PackageModel.find({ isFeatured: true })
+        const getFeaturedPackage = await PackageModel.find(
+            {
+                isFeatured: true,
+                isVisible: true
+            })
             .populate(
                 { path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } }
             )
@@ -338,9 +314,7 @@ const GET_ALL_FEATURED_PACKAGE = async (req, res, next) => {
     }
 }
 
-
-// Add Sorting Also..
-// used in admin
+// FOR_ADMIN
 const GET_ALL_PACKAGE = async (req, res, next) => {
     try {
         const { error, value } = PAGINATION_VALIDATION_SCHEMA.validate(req.query);
@@ -410,6 +384,7 @@ const GET_ALL_PACKAGE_FOR_USERS = async (req, res, next) => {
     }
 }
 
+// FOR_ADMIN
 const GET_SINGLE_PACKAGE = async (req, res, next) => {
     const PKG_PERMALINK = req?.params?.PERMALINK;
 
@@ -443,11 +418,12 @@ const GET_SINGLE_PACKAGE = async (req, res, next) => {
     res.json(isPackageExists)
 }
 
+// FOR_USERS
 const GET_SINGLE_PACKAGE_FOR_USERS = async (req, res, next) => {
     try {
         const SLUG = req.params.SLUG;
 
-        const Package = await PackageModel.findOne({ slug: SLUG },
+        const Package = await PackageModel.findOne({ slug: SLUG, isVisible: true },
             { slug: 0, __v: 0, createdAt: 0, updatedAt: 0, isFeatured: 0 })
             .populate(
                 {
@@ -481,15 +457,12 @@ const GET_SINGLE_PACKAGE_FOR_USERS = async (req, res, next) => {
             return next(createHttpError(400, "Package not available"))
         }
 
-
-
         return res.status(200).json(Package)
 
     } catch (error) {
         return next(createHttpError(400, "Internal error.."))
     }
 }
-
 
 export {
     ADD_NEW_PACKAGE,

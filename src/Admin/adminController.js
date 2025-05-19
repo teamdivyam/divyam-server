@@ -3,8 +3,9 @@ import {
     AdminLoginValidateSchema,
     CHANGE_ADMIN_PASSWORD_SCHEMA_VALIDATION,
     GET_ALL_USERS_SCHEMA_VALIDATION,
-    VALIDATE_SEARCH_SCHEMA
-} from "../validations/admins/index.js"
+    VALIDATE_SEARCH_SCHEMA,
+    SEARCH_AGENTS_VALIDATIONS_SCHEMA
+} from "../validators/admins/index.js"
 
 import bcrypt from "bcryptjs";
 
@@ -423,9 +424,6 @@ const SEARCH_ORDERS = async (req, res, next) => {
     }
 }
 
-const SEARCH_AGENTS_VALIDATIONS_SCHEMA = Joi.object({
-    s: Joi.string().alphanum().min(3).max(20).required()
-});
 
 const SEARCH_AGENTS = async (req, res, next) => {
     try {
@@ -471,7 +469,7 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             url: signedUrl
-        })
+        });
     } catch (error) {
         logger.info(`Failed during genrating PreSigned URL ${error}`)
         return next(createHttpError(400, "Something went wrong"))
@@ -568,7 +566,6 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
         return next(createHttpError(400, "Something went wrong.."))
     }
 }
-
 
 
 export {
