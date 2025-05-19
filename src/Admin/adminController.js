@@ -5,7 +5,7 @@ import {
     GET_ALL_USERS_SCHEMA_VALIDATION,
     VALIDATE_SEARCH_SCHEMA,
     SEARCH_AGENTS_VALIDATIONS_SCHEMA
-} from "../validators/admins/index.js"
+} from "../Validators/admins/schema.js"
 
 import bcrypt from "bcryptjs";
 

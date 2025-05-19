@@ -17,7 +17,7 @@ import {
     RegisterUserValidateSchema,
     otpValidateSchema,
     UPDATE_USER_VALIDATE_SCHEMA
-} from "../validators/users/index.js";
+} from "../Validators/users/schema.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
