@@ -10,16 +10,14 @@ import moment from "moment";
 import { UAParser } from "ua-parser-js";
 import sendOTP from "../services/sendOTP.js"
 
+import logger from "../config/logger.js";
+import isEmailUnique from "../utils/isEmailUnique.js";
+
 import {
     RegisterUserValidateSchema,
     otpValidateSchema,
     UPDATE_USER_VALIDATE_SCHEMA
-} from "../validators/users/index.js"
-
-
-import logger from "../config/logger.js";
-
-import isEmailUnique from "../utils/isEmailUnique.js";
+} from "../validators/users/index.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
