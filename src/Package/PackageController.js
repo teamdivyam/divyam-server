@@ -6,7 +6,7 @@ import generateOrderID from "../Counter/counterController.js";
 import {
     NEW__PKG__VALIDATE__SCHEMA,
     UPDATE__PKG__VALIDATE_SCHEMA
-} from "../Validators/Package/index.js"
+} from "../Validators/Package/schema.js"
 
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
 import DeleteObject from "../services/DeleteFileFromServer.js";

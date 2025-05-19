@@ -22,7 +22,7 @@ import {
     ALL_ORDER_SCHEMA_VALIDATION,
     GET_FILTERED_ORDER_VALIDATION_SCHEMA,
     IS_ORDER_ID
-} from "../Validators/Orders/index.js"
+} from "../Validators/Orders/schema.js"
 
 
 var instance = new Razorpay({

@@ -1,7 +1,7 @@
 import createHttpError from "http-errors";
 import Joi from "joi";
 import { DELIVERY_PARTNER_CREATE_PROFILE_VALIDATION }
-    from "../validators/DeliveryPartners/index.js";
+    from "../Validators/DeliveryPartners/schema.js";
 import DeliveryPartnerModel from './DeliveryPartnerModel.js';
 
 const REGISTER_SCHEMA_VALIDATE = Joi.object({
