@@ -8,7 +8,7 @@ import {
     GET__AREA__ZONE__VALIDATE__SCHEMA,
     GET_ALL_AREA_ZONES_SCHEMA_VALIDATION,
     PIN_CODE_VERIFY_SCHEMA,
-} from "../validators/areaZone/index.js"
+} from "../Validators/areaZone/schema.js"
 
 import areaPinModel from './areaPinCodeModel.js';
 import moment from 'moment';
