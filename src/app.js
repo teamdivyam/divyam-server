@@ -9,7 +9,6 @@ import AdminRoute from "./Routes/adminRoute.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 import { config } from "./config/_config.js";
 
-
 const app = express();
 
 app.use(express.json());
@@ -17,6 +16,7 @@ app.use(cookieParser());
 app.use(helmet());
 app.disable('x-powered-by');
 app.set('trust proxy', true);
+
 const allowedOrigins = [
     config.ORGIN1,
     config.ORGIN2,
@@ -62,11 +62,9 @@ app.use('/api', Route);
 app.use('/api/admin', AdminRoute);
 
 
-/*
-    Razorpay-webhook 
-*/
 
-app.post('/api/v1/rzrpay-payment-capture', NEW_ORDER_WEB_HOOK);
+// Razorpay-webhook 
+app.post('/api/v1/payments-hooks', NEW_ORDER_WEB_HOOK);
 
 app.get('/health', (req, res, next) => {
     res.status(200).json(
@@ -85,13 +83,18 @@ app.use(function (req, res, next) {
     })
 });
 
-/*
-global Error handler middleware
-*/
-
+// global Error handler middleware
 app.use(globalErrorHandler);
 
 export default app
+
+
+
+
+
+
+
+
 
 
 // app.use('/api/employee/', EMPRoutes);

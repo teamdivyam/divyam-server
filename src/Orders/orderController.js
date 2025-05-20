@@ -24,6 +24,8 @@ import {
     IS_ORDER_ID
 } from "../Validators/Orders/schema.js"
 
+import TransactionModel from "./transactionModel.js";
+
 
 var instance = new Razorpay({
     key_id: config.RZR_PAY_ID,
@@ -33,7 +35,6 @@ var instance = new Razorpay({
 
 // Create Orders
 const NEW_ORDER = async (req, res, next) => {
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -62,7 +63,9 @@ const NEW_ORDER = async (req, res, next) => {
             `
         );
 
-        const startBookingDate = new Date(startDate)
+
+        const startBookingDate = new Date(startDate);
+        //  new Date(startDate)
         const endBookingDate = new Date(endDate)
 
         console.log(
@@ -70,7 +73,7 @@ const NEW_ORDER = async (req, res, next) => {
                 startBookingDate,
                 endBookingDate
             }
-        )
+        );
 
         console.log("LOG_1");
 
@@ -79,7 +82,6 @@ const NEW_ORDER = async (req, res, next) => {
 
         const isUserAvailable = await userModel.findById(USER_ID);
 
-
         if (!isUserAvailable) {
             return next(createHttpError(400, "Invalid Request"))
         }
@@ -87,6 +89,8 @@ const NEW_ORDER = async (req, res, next) => {
         if (!isUserAvailable.isVerified) {
             return next(createHttpError(400, "Please complete your profile"))
         }
+
+        //CHECK_COPON_CODE
 
         // chech-for-availibilty
         const isOrderAvailableInYourPinCode = await AreaZoneModel.findOne(
@@ -140,8 +144,8 @@ const NEW_ORDER = async (req, res, next) => {
 
         console.log("LOG_5");
 
-
         const totalAmount = Package.price * productQuantity;
+
         console.log("LOG_5.1");
 
         const razorpayOrder = await instance.orders.create({
@@ -162,40 +166,34 @@ const NEW_ORDER = async (req, res, next) => {
 
         console.log("LOG_6.1");
 
-        const INSERT_NEW_ORDER = await OrderModel.create(
-            [
-                {
-                    orderId: razorpayOrder.id,
-                    customer: USER_ID,
-                    product: {
-                        productId: Package._id,
-                        quantity: productQuantity,
-                        price: totalAmount
-                    },
-                    payment: {
-                        currency: "INR",
-                    },
-                    totalAmount: totalAmount
-                }
-            ],
-            { session }
+        const createOrder = new OrderModel(
+            {
+                orderId: razorpayOrder.id,
+                customer: USER_ID,
+                product: {
+                    productId: Package._id,
+                    quantity: productQuantity,
+                    price: totalAmount
+                },
+                totalAmount: totalAmount
+            }
         );
 
         console.log("LOG_6.2");
 
-        if (!INSERT_NEW_ORDER) {
+        if (!createOrder) {
             await session.abortTransaction();
             return next(createHttpError(400, "Failed to place order. Please try again."));
         }
 
-        // for booking slot available
+        // CREATE_NEW_BOOKING
         const NEW_BOOKING = await bookingModel.create(
             [{
                 startDate: startBookingDate,
                 endDate: endBookingDate,
                 resourceId: packageID,
                 customerId: USER_ID,
-                orderId: INSERT_NEW_ORDER[0]._id
+                orderId: createOrder._id
             }],
             { session }
         );
@@ -203,11 +201,34 @@ const NEW_ORDER = async (req, res, next) => {
         if (!NEW_BOOKING) {
             await session.abortTransaction();
             return next(createHttpError(400, "Oops eomthing went wrong, please try agaian later."))
+
         }
-        INSERT_NEW_ORDER.booking = NEW_BOOKING._id;
-        await NEW_BOOKING.save();
+
+        createOrder.booking = NEW_BOOKING[0]._id;
+        await createOrder.save({ session });
 
         console.log("LOG_6.3");
+
+
+        // CREATE_TRANSACTION
+        const TRANSACTION = await TransactionModel.create(
+            [
+                {
+                    user: USER_ID,
+                    order: createOrder._id,
+                    gatewayOrderId: razorpayOrder.id,
+                    amount: totalAmount,
+                    status: "processing"
+                }
+            ],
+            { session: session }
+        );
+
+
+        if (!TRANSACTION) {
+            await sessabortTransaction()
+            return next(createHttpError(400, "Please Try again later-Internal Error"))
+        }
 
         await session.commitTransaction();
 
@@ -216,7 +237,7 @@ const NEW_ORDER = async (req, res, next) => {
             message: "Order created successfully",
             orderId: razorpayOrder.id,
             amount: totalAmount,
-            notes //options
+            notes //options-used in frontend
         });
 
     } catch (error) {

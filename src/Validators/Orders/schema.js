@@ -1,16 +1,21 @@
 import { isObjectId } from "../REGEX/index.js"
 import Joi from "joi"
+import moment from "moment";
 
 const TRACK_CART_SCHEMA_VALIDATOR = Joi.object({
     packageId: Joi.string().pattern(isObjectId).required(),
     qty: Joi.number().default(1).required()
 })
 
+
+
 const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     packageID: Joi.string().pattern(isObjectId).required(),
     qty: Joi.number().positive().max(5).required(),
-    startDate: Joi.date().required(),
-    endDate: Joi.date().required(),
+    startDate: Joi.date().iso().greater(
+        moment().add(6, 'months').toDate()
+    ).required(),
+    endDate: Joi.date().iso().min(Joi.ref("startDate")).required(),
 });
 
 const PAGINATION_SCHEMA_VALIDATOR = Joi.object({

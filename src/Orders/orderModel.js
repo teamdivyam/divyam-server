@@ -12,7 +12,7 @@ const orderSchema = new mongoose.Schema(
 
         booking: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "booking",
+            ref: "Booking",
         },
 
         // pincode: { type: Number, required: true, index: true },
@@ -48,37 +48,42 @@ const orderSchema = new mongoose.Schema(
             ],
             default: "Processing",
         },
-
-        payment: {
-            status: {
-                type: String,
-                enum: [
-                    "Paid",
-                    "Failed",
-                    "Pending"
-                ],
-                default: "Pending",
-                index: true,
-            },
-            method: {
-                type: String,
-                enum: [
-                    "processing",
-                    "card",
-                    "debit",
-                    "credit",
-                    "netbanking",
-                    "upi",
-                    "wallet",
-                ],
-
-                default: "processing",
-            },
-            gateway: {
-                razorpaySignature: { type: String },
-                razorpayPaymentId: { type: String },
-            },
+        transaction: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Transaction"
         },
+
+        // payment: {
+        //     status: {
+        //         type: String,
+        //         enum: [
+        //             "Paid",
+        //             "Failed",
+        //             "Pending"
+        //         ],
+        //         default: "Pending",
+        //         index: true,
+        //     },
+        //     method: {
+        //         type: String,
+        //         enum: [
+        //             "processing",
+        //             "card",
+        //             "debit",
+        //             "credit",
+        //             "netbanking",
+        //             "upi",
+        //             "wallet",
+        //         ],
+
+        //         default: "processing",
+        //     },
+        //     gateway: {
+        //         razorpaySignature: { type: String },
+        //         razorpayPaymentId: { type: String },
+        //     },
+        // },
+
 
         notes: { type: String, default: "" },
         totalAmount: { type: Number, required: true },
@@ -90,7 +95,7 @@ orderSchema.index({ orderId: 1 });
 orderSchema.index({ customer: 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ pincode: 1 });
-orderSchema.index({ "payment.status": 1 });
+// orderSchema.index({ "payment.status": 1 });
 
 const OrderModel = mongoose.model("Order", orderSchema);
 export default OrderModel;

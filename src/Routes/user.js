@@ -73,7 +73,7 @@ Route.post('/availability-check', CHECK_AREA_STATUS);
 Route.post('/check-pincode', PINCODE_VERIFY);
 
 // Route.post('/new-order', authUser, NEW_ORDER);
-Route.post('/new-order', authUser, NEW_ORDER);
+Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', verifyPayments);
 
 //call guest api when user visit for the first time 

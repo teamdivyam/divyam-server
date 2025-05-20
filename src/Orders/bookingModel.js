@@ -4,6 +4,7 @@ const bookingSchema = new mongoose.Schema({
     resourceId: { type: mongoose.Schema.Types.ObjectId, ref: "Package", required: true },  //packageId
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },   //customerId
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+    transaction: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     status: {
@@ -22,13 +23,8 @@ const bookingSchema = new mongoose.Schema({
     cancellationPolicy: { type: String },
 }, { timestamps: true });
 
-const bookingModel = mongoose.model("booking", bookingSchema);
+const bookingModel = mongoose.model("Booking", bookingSchema);
 
-// middleware
-bookingSchema.pre('save', (next) => {
-    console.log("START_DATE", this.startDate);
-    console.log("END_DATE", this.endDate);
-})
 
 
 

@@ -4,7 +4,10 @@ import createHttpError from "http-errors";
 
 import {
     NEW_EMPLOYEE_SCHEMA_VALIDATION,
-    EMPLOYEE_LOG_IN_SCHEMA_VALIDATION
+    EMPLOYEE_LOG_IN_SCHEMA_VALIDATION,
+    VALIDATE_OBJ_ID,
+    AUTH_SCHEMA_VALIDATION,
+    VALIDATE_UNSET_SUPERVISOR_FROM_MANAGER
 } from "../../Validators/employee/schema.js";
 
 import UploadImageOnServer from "../../services/UploadImageOnServer.js";
@@ -17,12 +20,6 @@ import SuperVisorModel from '../models/SupervisorModel.js';
 import Joi from 'joi';
 import areaPinModel from '../../AreaZone/areaPinCodeModel.js';
 import mongoose from 'mongoose';
-
-const AUTH_SCHEMA_VALIDATION = Joi.object({
-    role: Joi.string().valid('manager', 'supervisor'),
-    email: Joi.string().email().required(),
-    password: Joi.string().min(6).max(30).required()
-})
 
 const NEW_EMPLOYEE = async (req, res, next) => {
     try {
@@ -424,13 +421,6 @@ const GET_PROFILE = async (req, res, next) => {
     }
 }
 
-const objIdRegex = /^[a-fA-F0-9]{24}$/;
-
-const VALIDATE_OBJ_ID = Joi.object({
-    managerObjId: Joi.string().pattern(objIdRegex).required(),
-    superVisorObjId: Joi.string().pattern(objIdRegex).required(),
-})
-
 const SET_SUPERVISOR = async (req, res, next) => {
     try {
         const { error, value } = VALIDATE_OBJ_ID.validate(req.body);
@@ -469,13 +459,6 @@ const SET_SUPERVISOR = async (req, res, next) => {
         return next(createHttpError(400, error))
     }
 }
-
-
-const VALIDATE_UNSET_SUPERVISOR_FROM_MANAGER = Joi.object({
-    managerID: Joi.string().required(),
-    superVisorID: Joi.string().required(),
-});
-
 const UNSET_SUPERVISOR_FROM_MANAGER = async (req, res, next) => {
     try {
         const { error, value } = VALIDATE_UNSET_SUPERVISOR_FROM_MANAGER.validate(req.body);
@@ -531,15 +514,12 @@ const GET_ALL_UNASSIGNED_SUPERVISORS = async (req, res, next) => {
     }
 }
 
-
-
 export {
     NEW_EMPLOYEE,
     AUTH_EMPLOYEE,
     GET_EMPLOYEE,
     GET_SINGLE_EMPLOYEE,
     DELETE_EMPLOYEE,
-
     GET_PROFILE,
     SET_SUPERVISOR,
     GET_ALL_UNASSIGNED_SUPERVISORS,

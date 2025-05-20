@@ -5,14 +5,14 @@ import handleCapturedPayments from "./handleSuccessPayment.js";
 
 export const NEW_ORDER_WEB_HOOK = async (req, res, next) => {
     console.log("WEBHOOK_CALLED ✅");
-
     try {
-        // const RZRPAY_WEBHOOK_SECRET = "mahtab1234";
         const { entity, event, payload, created_at } = req.body;
+
         const { payment } = payload;
         const { entity: paymentInfo } = payment;
 
         if (paymentInfo.status === "failed") {
+
             const paymentFailed = await handleFailedPayments(paymentInfo);
 
             if (!paymentFailed) {
