@@ -64,7 +64,7 @@ app.use('/api/admin', AdminRoute);
 
 
 // Razorpay-webhook 
-app.post('/api/v1/payments-hooks', NEW_ORDER_WEB_HOOK);
+app.post('/api/v1/razorpay-webhook', NEW_ORDER_WEB_HOOK);
 
 app.get('/health', (req, res, next) => {
     res.status(200).json(
