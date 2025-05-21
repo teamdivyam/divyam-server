@@ -9,7 +9,6 @@ import OrderModel from "./orderModel.js";
 const isObjectId = /^[0-9a-fA-F]{24}$/;
 import generateOrderID from "../Counter/counterController.js";
 import AreaZoneModel from "../AreaZone/areaZoneModel.js";
-import logger from "../config/logger.js";
 import moment from "moment";
 import cartTrackingModel from "./cartTrackingModel.js";
 import bookingModel from "./bookingModel.js";
@@ -25,6 +24,7 @@ import {
 } from "../Validators/Orders/schema.js"
 
 import TransactionModel from "./transactionModel.js";
+import logger from "../logger/index.js";
 
 
 var instance = new Razorpay({
@@ -52,30 +52,30 @@ const NEW_ORDER = async (req, res, next) => {
         }
         const { packageID, qty, startDate, endDate } = req.body;
 
-        console.log(`LOG_DATE_FORMAT: ${startDate}-${endDate}`);
+        // console.log(`LOG_DATE_FORMAT: ${startDate}-${endDate}`);
 
-        console.log(
-            `
-            PACKAGEID: ${packageID},
-            QTY: ${qty},
-            startDate: ${startDate},
-            endDate: ${endDate}
-            `
-        );
+        // console.log(
+        //     `
+        //     PACKAGEID: ${packageID},
+        //     QTY: ${qty},
+        //     startDate: ${startDate},
+        //     endDate: ${endDate}
+        //     `
+        // );
 
 
         const startBookingDate = new Date(startDate);
         //  new Date(startDate)
         const endBookingDate = new Date(endDate)
 
-        console.log(
-            {
-                startBookingDate,
-                endBookingDate
-            }
-        );
+        // console.log(
+        //     {
+        //         startBookingDate,
+        //         endBookingDate
+        //     }
+        // );
 
-        console.log("LOG_1");
+        // console.log("LOG_1");
 
 
         const productQuantity = qty || 1;
@@ -100,7 +100,7 @@ const NEW_ORDER = async (req, res, next) => {
             }
         );
 
-        console.log("LOG_2");
+        // console.log("LOG_2");
 
         if (!isOrderAvailableInYourPinCode) {
             return next(createHttpError(400, "Our Services are not avaialable in your area"))
@@ -120,7 +120,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Package not found"));
         }
 
-        console.log("LOG_3");
+        // console.log("LOG_3");
 
         //  check Booking available or not 
         const isBookingAvailable = await bookingModel.findOne(
@@ -131,7 +131,7 @@ const NEW_ORDER = async (req, res, next) => {
             }
         ).lean();
 
-        console.log("LOG4");
+        // console.log("LOG4");
 
         if (isBookingAvailable) {
             return res.status(404).json(
@@ -142,11 +142,11 @@ const NEW_ORDER = async (req, res, next) => {
             )
         }
 
-        console.log("LOG_5");
+        // console.log("LOG_5");
 
         const totalAmount = Package.price * productQuantity;
 
-        console.log("LOG_5.1");
+        // console.log("LOG_5.1");
 
         const razorpayOrder = await instance.orders.create({
             amount: totalAmount * 100,
@@ -154,7 +154,7 @@ const NEW_ORDER = async (req, res, next) => {
             receipt: `order_${new Date().getTime()}`,
         });
 
-        console.log("LOG_5.2");
+        // console.log("LOG_5.2");
 
 
         if (!razorpayOrder) {
@@ -162,9 +162,9 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(500, "Payment gateway error"));
         }
 
-        console.log("LOG_6");
+        // console.log("LOG_6");
 
-        console.log("LOG_6.1");
+        // console.log("LOG_6.1");
 
         const createOrder = new OrderModel(
             {
@@ -179,7 +179,7 @@ const NEW_ORDER = async (req, res, next) => {
             }
         );
 
-        console.log("LOG_6.2");
+        // console.log("LOG_6.2");
 
         if (!createOrder) {
             await session.abortTransaction();
@@ -207,7 +207,7 @@ const NEW_ORDER = async (req, res, next) => {
         createOrder.booking = NEW_BOOKING[0]._id;
         await createOrder.save({ session });
 
-        console.log("LOG_6.3");
+        // console.log("LOG_6.3");
 
 
         // CREATE_TRANSACTION
@@ -241,7 +241,9 @@ const NEW_ORDER = async (req, res, next) => {
         });
 
     } catch (error) {
-        logger.info(error.message);
+        logger.error(
+            `Failed to prepare Order: ${error.message}, Error stack: ${error.stack}`
+        );
         await session.abortTransaction();
         return next(createHttpError(500, error));
     } finally {
@@ -306,63 +308,12 @@ const verifyPayments = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error("Payment verification error:", error);
+        logger.error(
+            `Failed to verify razaorpay payment: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(500, "Payment verification failed"));
     }
 }
-
-// const verifyPayments = async (req, res, next) => {
-//     try {
-//         const { razorpay_signature, razorpay_order_id, razorpay_payment_id } = req.body;
-
-
-//         const generatedSignature = crypto
-//             .createHmac("sha256", config.RZR_PAY_SCRT)
-//             .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-//             .digest("hex")
-
-//         var isSignatureValid = generatedSignature === razorpay_signature;
-
-//         if (!isSignatureValid) { return next(createHttpError(400, "Payment failed..")) }
-
-
-//         const rzrVerifyPayments = await instance.orders.fetch(razorpay_order_id);
-//         const isPaymentPaid = rzrVerifyPayments.status === 'paid' ? true : false;
-
-
-//         console.log(rzrVerifyPayments);
-
-
-//         if (!isPaymentPaid) {
-//             return next(createHttpError(400, "Something went wrong.."))
-//         }
-
-//         const Order = await orderModel.findOne({ order_id: razorpay_order_id });
-
-//         Order.payment.status = rzrVerifyPayments.status;
-//         Order.gateway.razorpay_signature = razorpay_signature;
-//         Order.gateway.razorpay_payment_id = razorpay_payment_id
-
-//         console.log("LOG_VERIFICATIONS");
-
-
-//         // if (!Order) {
-//         //     return next(createHttpError(400, "Payments failed.."))
-//         // }
-
-
-//         /**
-//          * RUN JOBS FOR NOTIFICATIONS
-//          */
-
-//         return res.status(200).json({ msg: "Payment is successfull" });
-
-//     } catch (error) {
-//         return next(createHttpError(400, "internal error can"))
-//     }
-// }
-
-
 
 
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
@@ -379,7 +330,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong."))
         }
 
-        const UserOrders = await userModel.findById(USER_ID, { orders: 1, _id: 0 })
+        const UserOrders = await userModel.findById(USER_ID)
             .populate({
                 path: "orders",
                 select: "product orderStatus payment totalAmount",
@@ -387,16 +338,14 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                     path: "product.productId",
                     model: "Package",
                     select: "name description productImg slug",
-
                     populate: {
                         path: "productImg",
                         model: "productsimg",
-                        select: { imgSrc: 1, imagePath: 1 }
+                        select: { imgSrc: 1, imagePath: 1, id: 1 }
                     }
                 }
             })
-            .exec()
-
+            .exec();
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
@@ -412,6 +361,9 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             );
 
     } catch (error) {
+        logger.error(
+            `Failed to get users Orders: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(401, `Internal error ${error.message}`))
     }
 }
@@ -478,14 +430,15 @@ const GET_SINGLE_ORDERS = async (req, res, next) => {
 
         res.status(200).json(prettyData);
     } catch (error) {
+        logger.error(
+            `Failed to get user [single]Order: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(401, `Something went wrong during fetching Orders from database  ${error}`))
     }
 }
 
 
 // Change Order Status of Orders
-
-
 
 const CHANGE_ORDER_STATUS = async (req, res, next) => {
     try {
@@ -514,6 +467,9 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
             msg: "order status changed successfully."
         })
     } catch (error) {
+        logger.error(
+            `Failed to change order status: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(401, "Unauthorize.."))
     }
 }
@@ -587,6 +543,9 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         })
 
     } catch (error) {
+        logger.error(
+            `Failed to get filter order: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(401, error))
     }
 }
@@ -653,6 +612,9 @@ const ORDER_CANCEL = async (req, res, next) => {
 
 
     } catch (error) {
+        logger.error(
+            `Failed to cancel user order: ${error.message}, Error stack: ${error.stack}`
+        );
         await session.abortTransaction();
         return next(createHttpError(400, "Something went wrong."))
     }
@@ -694,8 +656,10 @@ const SAVE_CART = async (req, res, next) => {
         );
 
     } catch (error) {
-        // return next(createHttpError(400, "Something went wrong | Internal error"));
-        return next(createHttpError(400, error));
+        logger.error(
+            `Failed to save user cart: ${error.message}, Error stack: ${error.stack}`
+        );
+        return next(createHttpError(400, "Internal error"));
     }
 }
 

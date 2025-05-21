@@ -2,6 +2,7 @@ import createHttpError from "http-errors";
 import crypto from "crypto"
 import handleFailedPayments from "./handleFailedPayments.js";
 import handleCapturedPayments from "./handleSuccessPayment.js";
+import logger from "../../logger/index.js";
 
 export const NEW_ORDER_WEB_HOOK = async (req, res, next) => {
     console.log("WEBHOOK_CALLED ✅");
@@ -73,7 +74,10 @@ export const NEW_ORDER_WEB_HOOK = async (req, res, next) => {
 
 
     } catch (error) {
-        console.log(error);
+        logger.error(
+            `Failed during razorpay webhook: ${error.message}, Error stack: ${error.stack}`
+        );
+
         return next(createHttpError(400, "Internal error"))
     }
 

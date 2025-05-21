@@ -8,7 +8,6 @@ import {
 } from "../Validators/admins/schema.js"
 
 import bcrypt from "bcryptjs";
-
 import createHttpError from "http-errors";
 import adminModel from '../Admin/adminModel.js'
 import { config } from "../config/_config.js";
@@ -18,22 +17,22 @@ import orderModel from '../Orders/orderModel.js';
 
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
 import handleImage from "../utils/handleImage.js";
-import logger from "../config/logger.js";
-import Joi from "joi";
+
 
 import DeliveryPartnerModel from "../DeliveryPartners/DeliveryPartnerModel.js";
 import verifyRecaptcha from "../utils/verifyRecaptchaToken.js";
 import getPreSignedURL from "../services/getPreSignedUrl.js";
 import Order from "../Orders/orderModel.js";
 import moment from "moment";
+import logger from "../logger/index.js";
 
 const RegisterAdmin = async (req, res, next) => {
+
     if (!config.SHOW_ADMIN_REGISTER_PAGE) {
         return res.json(400).json({
             msg: "Can not register at this moment"
         })
     }
-
     try {
         // validate Req Body..
         const { error, value } = RegisterUserValidateSchema.validate(req?.body);
@@ -80,7 +79,6 @@ const RegisterAdmin = async (req, res, next) => {
             return next(createHttpError(401, "Internal Error.."))
         }
 
-        logger.info(`New admin registered successfully`)
 
         res.status(200).json({
             success: true,

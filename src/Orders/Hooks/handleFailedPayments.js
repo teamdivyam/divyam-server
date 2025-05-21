@@ -1,12 +1,12 @@
-import logger from "../../config/logger.js";
 import OrderModel from "../orderModel.js";
 import mongoose from 'mongoose'
 import TransactionModel from "../transactionModel.js";
+import logger from "../../logger/index.js";
 
 const handleFailedPayments = async (paymentInfo) => {
+
     const session = await mongoose.startSession();
     session.startTransaction();
-    console.log("Log1__1")
     try {
         const orderId = paymentInfo.order_id;
         const Order = await OrderModel.findOne({ orderId });
@@ -16,6 +16,7 @@ const handleFailedPayments = async (paymentInfo) => {
             await session.abortTransaction()
             return false
         }
+
         console.log("Log1__2")
 
         Order.orderStatus = "Failed";
@@ -61,8 +62,13 @@ const handleFailedPayments = async (paymentInfo) => {
         Order.notes = failureReason.trim();
 
         // On SUCCESS
+        console.log("❌- failed");
         return true;
     } catch (error) {
+        logger.error(
+            `Failed to process Razorpay [failed payment webhook]: ${error.message}, Error stack: ${error.stack}`
+        );
+
         await session.abortTransaction()
     }
     finally {

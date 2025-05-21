@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import logger from "../../config/logger.js";
 import userModel from "../../Users/userModel.js";
 import OrderModel from "../orderModel.js"
 import TransactionModel from "../transactionModel.js";
+import logger from "../../logger/index.js";
 
 const handleCapturedPayments = async (payment) => {
     const session = await mongoose.startSession();
@@ -65,10 +65,13 @@ const handleCapturedPayments = async (payment) => {
 
         // ON-SUCCESS
         await session.commitTransaction();
+        console.log("✅- Success");
         return true
     } catch (error) {
         session.abortTransaction()
-        logger.info(error)
+        logger.error(
+            `Failed to process Razorpay [Success payment webhook]: ${error.message}, Error stack: ${error.stack}`
+        );
         return false
     }
     finally {

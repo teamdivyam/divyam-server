@@ -13,9 +13,9 @@ import DeleteObject from "../services/DeleteFileFromServer.js";
 
 import handleImage from "../utils/handleImage.js";
 
-import logger from "../config/logger.js";
 import productImgModel from "./productImgModle.js";
 import mongoose, { mongo, Mongoose } from "mongoose";
+import logger from "../logger/index.js";
 
 // body Validate..
 const ADD_NEW_PACKAGE = async (req, res, next) => {

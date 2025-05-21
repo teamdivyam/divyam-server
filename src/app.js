@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import AdminRoute from "./Routes/adminRoute.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 import { config } from "./config/_config.js";
-
+import logger from "./logger/index.js";
 const app = express();
 
 app.use(express.json());
@@ -16,6 +16,12 @@ app.use(cookieParser());
 app.use(helmet());
 app.disable('x-powered-by');
 app.set('trust proxy', true);
+
+app.use((req, res, next) => {
+    logger.info(`Incoming request: ${req.method} ${req.url}`);
+    next();
+});
+
 
 const allowedOrigins = [
     config.ORGIN1,
@@ -57,11 +63,11 @@ const ipLimiter = rateLimit({
         return ip;
     }
 });
+
 // app.use(ipLimiter);
+
 app.use('/api', Route);
 app.use('/api/admin', AdminRoute);
-
-
 
 // Razorpay-webhook 
 app.post('/api/v1/razorpay-webhook', NEW_ORDER_WEB_HOOK);

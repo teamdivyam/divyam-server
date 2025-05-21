@@ -58,6 +58,7 @@ import {
     UNSET_SUPERVISOR_FROM_MANAGER
 } from "../Employee/controller/EmployeeController.js";
 import { nanoid } from "nanoid";
+import logger from "../logger/index.js";
 
 const AdminRoute = express.Router();
 

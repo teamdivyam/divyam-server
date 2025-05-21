@@ -9,15 +9,13 @@ import generateOtp from "../utils/generateOtp.js";
 import moment from "moment";
 import { UAParser } from "ua-parser-js";
 import sendOTP from "../services/sendOTP.js"
-
-import logger from "../config/logger.js";
 import isEmailUnique from "../utils/isEmailUnique.js";
-
 import {
     RegisterUserValidateSchema,
     otpValidateSchema,
     UPDATE_USER_VALIDATE_SCHEMA
 } from "../Validators/users/schema.js";
+import logger from "../logger/index.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
@@ -87,7 +85,10 @@ const RegisterUser = async (req, res, next) => {
         }
 
     } catch (error) {
-        logger.info(error);
+        logger.error(
+            `Failed to Register User: ${error.message}, Error stack: ${error.stack}`
+        );
+
         next(createHttpError(401, `ERR.${error}`))
         return;
     }
@@ -141,6 +142,10 @@ const UpdateUser = async (req, res, next) => {
             }
         )
     } catch (error) {
+        logger.error(
+            `Failed to update user data: ${error.message}, Error stack: ${error.stack}`
+        );
+
         return next(createHttpError(400, `something went wrong please try again later ${error}`))
     }
 }
@@ -187,6 +192,10 @@ const UPDATE_PROFILE_PICTURE = async (req, res, next) => {
         )
 
     } catch (error) {
+        logger.error(
+            `Failed to update user profile picture: ${error.message}, Error stack: ${error.stack}`
+        );
+
         return next(createHttpError(400, `something went wrong please try again later`))
     }
 }
@@ -225,7 +234,10 @@ const USER_PRFOILE = async (req, res, next) => {
             );
 
     } catch (error) {
-        console.log(error);
+        logger.error(
+            `Failed to get user profile : ${error.message}, Error stack: ${error.stack}`
+        );
+
         return next(createHttpError(400, "internal errors"))
     }
 }
@@ -259,6 +271,10 @@ const WHOAMI = async (req, res, next) => {
         );
 
     } catch (error) {
+        logger.error(
+            `WHOAMI: ${error.message}, Error stack: ${error.stack}`
+        );
+
         return next(createHttpError(400, "Something went wrong"))
     }
 }
@@ -334,7 +350,9 @@ const VERIFY_OTP = async (req, res, next) => {
         });
 
     } catch (error) {
-        console.error(error.message);
+        logger.error(
+            `Failed to verify user: ${error.message}, Error stack: ${error.stack}`
+        );
         next(createHttpError(500, `error occurred ${error}`));
     }
 };
@@ -394,6 +412,9 @@ const GUEST_USER = async (req, res, next) => {
         )
 
     } catch (error) {
+        logger.error(
+            `Failed to extract guest Users: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(400, error))
     }
 }
@@ -407,6 +428,9 @@ const LOGOUT_USER = (req, res, next) => {
         });
 
     } catch (error) {
+        logger.error(
+            `Failed to Log-out user: ${error.message}, Error stack: ${error.stack}`
+        );
         return next(createHttpError(400, "Something went wrong"))
     }
 }

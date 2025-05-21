@@ -1,8 +1,6 @@
 import createHttpError from 'http-errors';
 import AreaZoneModel from './areaZoneModel.js';
 
-import logger from '../config/logger.js';
-
 import {
     NEW__AREA__ZONE__VALIDATE__SCHEMA,
     GET__AREA__ZONE__VALIDATE__SCHEMA,
@@ -12,6 +10,7 @@ import {
 
 import areaPinModel from './areaPinCodeModel.js';
 import moment from 'moment';
+import logger from '../logger/index.js';
 
 
 

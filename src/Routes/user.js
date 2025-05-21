@@ -53,7 +53,6 @@ const Route = express.Router();
 Route.post('/user/register', limitOTP, RegisterUser);
 // Verify-user-With-Otp..
 Route.post('/user/verify-otp', limitOTP, VERIFY_OTP);
-
 // Update Profile
 Route.get('/user/profile', authUser, USER_PRFOILE);
 Route.get('/user/me', authUser, WHOAMI);

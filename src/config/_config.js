@@ -32,6 +32,7 @@ const _config = {
     ORGIN1: process.env.ORIGIN1,
     ORGIN2: process.env.ORIGIN2,
     ORGIN3: process.env.ORIGIN3,
+    NODE_ENV: process.env.NODE_ENV
 }
 
 export { _config as config }
