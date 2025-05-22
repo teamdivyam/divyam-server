@@ -1,16 +1,16 @@
 import express from "express";
-import globalErrorHandler from "./middleware/ErrorHandler.js";
 import cors from "cors";
 import helmet from "helmet";
 import Route from "./Routes/user.js";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import AdminRoute from "./Routes/adminRoute.js";
-import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 import { config } from "./config/_config.js";
 import logger from "./logger/index.js";
-const app = express();
+import globalErrorHandler from "./middleware/ErrorHandler.js";
+import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
 
+const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
@@ -39,6 +39,7 @@ app.use(
     })
 );
 
+console.log(new Date());
 
 /**
  * Middleware to limit User api

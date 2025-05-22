@@ -339,8 +339,6 @@ const GET_ALL_PACKAGE = async (req, res, next) => {
 
         // log package data for production
 
-        logger.info(Package)
-
         if (!Package || !Package.length) {
             return next(createHttpError(400, "Internal error"));
         }

@@ -11,7 +11,6 @@ const otpValidateSchema = Joi.object({
     clientOtp: Joi.string().length(4).required(),
 });
 
-
 const UPDATE_USER_VALIDATE_SCHEMA = Joi.object({
     fullName: Joi.string().min(3).max(30).required(),
     gender: Joi.string().valid('male', 'female', 'others').required(),

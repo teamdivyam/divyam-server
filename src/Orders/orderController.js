@@ -484,20 +484,23 @@ const GET_ALL_ORDERS = async (req, res, next) => {
     if (error) {
         return next(createHttpError(401, "Invalid request."))
     }
+
     // assign req body to reqDATA 
     const reqDATA = value;
-
     const page = parseInt(reqDATA.page) || 1;
     const limit = parseInt(reqDATA.limit) || 10;
-
-
     const skip = (page - 1) * limit;
 
     if (skip < 0) {
         return next(createHttpError(401, "Invalid request.."))
     }
 
-    const orders = await OrderModel.find().select("-updatedAt  -__v").limit(limit).skip(skip);
+    // const orders = await OrderModel.find().select("-updatedAt  -__v").limit(limit).skip(skip);
+    const orders = await OrderModel.find().select("-updatedAt -__v -notes")
+        .populate({
+            path: "transaction",
+            select: "amount status gateway paymentMethod -_id"
+        }).lean()
 
     if (!orders) {
         return next(createHttpError(401, "No Orders.."))
@@ -662,7 +665,6 @@ const SAVE_CART = async (req, res, next) => {
         return next(createHttpError(400, "Internal error"));
     }
 }
-
 
 
 export {

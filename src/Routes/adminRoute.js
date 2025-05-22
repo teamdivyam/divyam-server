@@ -71,8 +71,6 @@ const LIMIT_ADMIN_LOGIN = rateLimit({
     keyGenerator: (req) => {
         const randomDigits = nanoid(10);
         const clientId = `${req.ip}-${randomDigits}`;
-
-        console.log(`CLIENT_id=> ${clientId}`);
         return clientId;
     }
 });
@@ -121,8 +119,8 @@ AdminRoute.patch("/areas-zone/:AREA_ZONE_ID", isAdmin, UPDATE_AREA_ZONE);
 AdminRoute.get("/areas-zone/:AREA_ZONE_ID", isAdmin, GET_SINGLE_AREA_ZONE);
 AdminRoute.delete("/areas-zone/:AREA_ZONE_ID", isAdmin, DELETE_AREA_ZONE);
 AdminRoute.get("/areas", isAdmin, GET_ALL_PIN_CODES);
-// Employee
 
+// Employee
 AdminRoute.post('/employee', isAdmin, Upload.single("avatar"), NEW_EMPLOYEE);
 AdminRoute.get('/employees', isAdmin, GET_EMPLOYEE); //get-all-employee
 AdminRoute.get('/employee/:EMP_ID', isAdmin, GET_SINGLE_EMPLOYEE);   //get-single-employee

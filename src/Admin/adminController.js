@@ -115,7 +115,6 @@ const LoginAdmin = async (req, res, next) => {
         }
 
 
-
         // Check user exist in the DB 
         const isAdmin = await adminModel.findOne({ email: reqData.email });
 
@@ -528,7 +527,7 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
                             model: "productsimg",
                             select: {
                                 imagePath: 1,
-
+                                _id: 0
                             }
                         }
                     }
@@ -543,7 +542,17 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
                     }
                 }
             )
-            .exec();
+            .populate({
+                path: "booking",
+                select: "-_id -resourceId -customerId -__v -orderId -updatedAt"
+            })
+            .populate(
+                {
+                    path: "transaction",
+                    select: "-_id -user -order -__v"
+                }
+            )
+            .exec()
 
 
         if (!order) {
