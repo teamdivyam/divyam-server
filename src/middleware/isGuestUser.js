@@ -34,6 +34,8 @@ const isGuestUser = async (req, res, next) => {
                 logger.info("Error caught at=> GUEST USER_TRACKING")
             }
 
+            console.log("DECODED_SESSION", decodedSession);
+
             req.visitor = {
                 visitor: decodedSession,
                 isUserGuest: isUserGuest
