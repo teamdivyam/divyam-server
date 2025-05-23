@@ -63,7 +63,7 @@ const RegisterUser = async (req, res, next) => {
             return res.json(
                 {
                     success: true,
-                    ops: newOtp
+                    otp: newOtp
                 }
             )
 
