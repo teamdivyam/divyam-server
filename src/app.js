@@ -39,8 +39,6 @@ app.use(
     })
 );
 
-console.log(new Date());
-
 /**
  * Middleware to limit User api
  */

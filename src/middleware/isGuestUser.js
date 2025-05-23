@@ -1,5 +1,6 @@
 import { config } from "../config/_config.js";
 import jwt from 'jsonwebtoken';
+import logger from "../logger/index.js";
 
 const isGuestUser = async (req, res, next) => {
     let isUserGuest;
@@ -30,7 +31,7 @@ const isGuestUser = async (req, res, next) => {
             const decodedSession = await jwt.decode(cookies.session, config.GUEST_USERS_SECRET);
 
             if (!decodedSession) {
-                next()
+                logger.info("Error caught at=> GUEST USER_TRACKING")
             }
 
             req.visitor = {
@@ -38,7 +39,7 @@ const isGuestUser = async (req, res, next) => {
                 isUserGuest: isUserGuest
             };
 
-            return next()
+            return next();
         }
 
         // if session and token not available , allocate Fresh visitorId

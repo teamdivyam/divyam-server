@@ -5,8 +5,7 @@ import moment from "moment";
 const TRACK_CART_SCHEMA_VALIDATOR = Joi.object({
     packageId: Joi.string().pattern(isObjectId).required(),
     qty: Joi.number().default(1).required()
-})
-
+});
 
 
 const VALIATE_ORDER_BODY_SCHEMA = Joi.object({

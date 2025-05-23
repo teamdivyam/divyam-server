@@ -510,7 +510,6 @@ const GET_ALL_ORDERS = async (req, res, next) => {
 }
 
 
-
 const GET_FILTERED_ORDER = async (req, res, next) => {
     try {
         const { error, value } = GET_FILTERED_ORDER_VALIDATION_SCHEMA.validate(req.query);
@@ -552,7 +551,6 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         return next(createHttpError(401, error))
     }
 }
-
 
 
 const ORDER_CANCEL = async (req, res, next) => {

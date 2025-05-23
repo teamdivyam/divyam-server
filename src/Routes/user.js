@@ -79,7 +79,6 @@ Route.post('/verify-payments', verifyPayments);
 Route.post('/session/guest', isGuestUser, GUEST_USER);
 Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 
-
 // LOG-out-user
 Route.get('/logout', authUser, LOGOUT_USER)
 
