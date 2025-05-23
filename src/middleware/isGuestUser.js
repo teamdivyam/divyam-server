@@ -41,7 +41,7 @@ const isGuestUser = async (req, res, next) => {
                 isUserGuest: isUserGuest
             };
 
-            return next();
+            next();
         }
 
         // if session and token not available , allocate Fresh visitorId
