@@ -518,12 +518,17 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
             return next(createHttpError(401, `${error?.details[0]?.message}`))
         }
 
-        const { page, limit, filterBy } = req.query;
+        let { page, limit, filterBy } = req.query;
         const skip = (page - 1) * limit;
 
         if (skip < 0 || page < 0 || limit < 0) {
             return next(createHttpError(400, "Invalid request.."))
         }
+
+        if (filterBy === "Success") {
+            filterBy = "Delivered"
+        }
+        console.log(filterBy);
 
         const Order = await OrderModel.find(
             {

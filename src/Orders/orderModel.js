@@ -38,12 +38,10 @@ const orderSchema = new mongoose.Schema(
                 "Shipped",
                 "Delivered",
                 "CANCELLATION_REQUESTED",
-                "Cancelled",
-                "Completed",  // ✅
                 "REFUND_REQUESTED",
+                "Cancelled",
                 "Refunded",
                 "Failed",
-                "On Hold",
                 "Out for Delivery",
             ],
             default: "Processing",
