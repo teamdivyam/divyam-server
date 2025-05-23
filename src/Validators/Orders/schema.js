@@ -41,7 +41,8 @@ const GET_FILTERED_ORDER_VALIDATION_SCHEMA = Joi.object(
             "Failed",
             "Out for Delivery",
             "Delivered",
-            "Success" //status used in only admin dashboard
+            "Success", //status used in only admin dashboard
+            "CANCELLATION_REQUESTED"
         ),
         page: Joi.number().required(),
         limit: Joi.number().required()
