@@ -7,7 +7,6 @@ const TRACK_CART_SCHEMA_VALIDATOR = Joi.object({
     qty: Joi.number().default(1).required()
 });
 
-
 const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     packageID: Joi.string().pattern(isObjectId).required(),
     qty: Joi.number().positive().max(5).required(),
@@ -39,7 +38,7 @@ const GET_FILTERED_ORDER_VALIDATION_SCHEMA = Joi.object(
             "Shipped",
             "Delivered",
             "Cancelled",
-            "Completed",
+            "Success",
             "Refunded",
             "Failed",
             "On Hold",

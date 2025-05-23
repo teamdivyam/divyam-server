@@ -27,25 +27,23 @@ const isGuestUser = async (req, res, next) => {
 
         if (cookies.session) {
             isUserGuest = true;
-
             const decodedSession = await jwt.decode(cookies.session, config.GUEST_USERS_SECRET);
 
             if (!decodedSession) {
                 logger.info("Error caught at=> GUEST USER_TRACKING")
             }
 
-            console.log("DECODED_SESSION", decodedSession);
 
             req.visitor = {
-                visitor: decodedSession,
+                visitor: JSON.stringify(decodedSession),
                 isUserGuest: isUserGuest
             };
 
-            next();
+            return next();
         }
 
         // if session and token not available , allocate Fresh visitorId
-        next()
+        return next()
     } catch (error) {
         throw new Error(error);
     }

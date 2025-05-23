@@ -525,7 +525,7 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Invalid request.."))
         }
 
-        const getOrder = await OrderModel.find(
+        const Order = await OrderModel.find(
             {
                 orderStatus: filterBy
             },
@@ -536,12 +536,16 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
                 orderDate: 0,
                 notes: 0
             }
-        ).skip(skip).limit(limit);
+        ).skip(skip).limit(limit)
+            .populate({
+                path: "transaction",
+                select: "amount status gateway paymentMethod -_id"
+            })
 
         return res.status(200).json({
             success: true,
             statusCode: 200,
-            responseData: getOrder
+            responseData: Order
         })
 
     } catch (error) {
@@ -627,6 +631,7 @@ const ORDER_CANCEL = async (req, res, next) => {
 
 const SAVE_CART = async (req, res, next) => {
     try {
+        console.log(req);
         const { error, value } = TRACK_CART_SCHEMA_VALIDATOR.validate(req.body);
 
         if (error) {
@@ -636,6 +641,8 @@ const SAVE_CART = async (req, res, next) => {
         const { packageId, qty } = req.body;
 
         const visitor = req.visitor;
+        console.log("BROWSER_INFO", req.visitor)
+
         const currTimstamp = new Date();
 
         const newCart = await cartTrackingModel.create({

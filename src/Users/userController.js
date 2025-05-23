@@ -384,6 +384,7 @@ const GUEST_USER = async (req, res, next) => {
                 (browser.os.name === 'macOS' || browser.os.name === 'Windows' || browser.os.name === 'Linux'),
         }
 
+        console.log("USER_AGENT", userInfo);
         const session_ID = await jwt.sign(
             userInfo,
             config.GUEST_USERS_SECRET,
