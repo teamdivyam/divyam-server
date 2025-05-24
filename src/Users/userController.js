@@ -211,7 +211,11 @@ const USER_PRFOILE = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong"));
         }
 
-        const formatDOB = moment(User.dob).format("DD/MM/YYYY");
+        let formatDOB;
+
+        if (User?.dob) {
+            formatDOB = moment(User?.dob).format("DD/MM/YYYY");
+        }
 
         var profile;
         if (User.avatar) {
@@ -221,7 +225,7 @@ const USER_PRFOILE = async (req, res, next) => {
 
         const user = {
             ...User._doc,
-            dob: formatDOB,
+            dob: formatDOB || null,
             avatarURL: profile
         }
 

@@ -37,7 +37,9 @@ const handleFailedPayments = async (paymentInfo) => {
 
         const Transaction = await TransactionModel.findOne(
             {
-                gatewayOrderId: orderId
+                gatewayOrderId: orderId,
+                status: "failed",
+                paymentMethod: "failed"
             }
         );
 
