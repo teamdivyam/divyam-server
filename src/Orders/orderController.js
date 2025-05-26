@@ -450,18 +450,26 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
         const { error, value } = UPDATE_ORDER_STATUS_VALIDATION_SCHEMA.validate(req.body);
 
         if (error) return next(createHttpError(400, error?.details[0]?.message))
-
-        const reqData = value;
-
-        const Order = await OrderModel.findByIdAndUpdate(
-            ORDER_ID,
-            { orderStatus: reqData?.status }
-        )
+        const Order = await OrderModel.findById(ORDER_ID);
 
         if (!Order) {
             return next(createHttpError(401, "Failed to update order status"))
         }
+        console.log(Order.orderStatus);
 
+        if (Order.orderStatus === "Cancelled" ||
+            Order.orderStatus === "Refunded" ||
+            Order.orderStatus === "Delivered"
+        ) {
+            return next(createHttpError(400, "Order status can't be chnaged at this moment"))
+        }
+
+        // Update Order staus
+        Order.orderStatus = value?.status;
+        await Order.save();
+
+
+        // On Success
         return res.status(201).json({
             statusCode: 200,
             msg: "order status changed successfully."

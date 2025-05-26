@@ -44,17 +44,17 @@ app.use(
 /**
  * Middleware to limit User api
  */
-
 const ipLimiter = rateLimit({
-    windowMs: 60000 * 5,// 30 minutes
-    max: 5, //5 Request.
+    windowMs: 60000 * 30,// 30 minutes
+    max: 2 * 1000, //5 Request.
     message: 'Too many requests Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
 
     keyGenerator: (req) => {
-        const uniqueID = nanoid(10)
-        return uniqueID;
+        const reqIP = req.ip;
+        const reqHost = req.headers
+        return reqIP;
     }
 });
 

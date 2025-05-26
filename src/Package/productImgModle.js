@@ -27,8 +27,6 @@ const productImgSchema = new mongoose.Schema(
 const virtualImagePath = productImgSchema.virtual("imgSrc");
 
 virtualImagePath.get(function () {
-    console.log("productImgType", this.imageType);
-
     if (this.imageType === 'banner') {
         return `${config.CLOUDFRONT_PATH}/UI/product-banner/${this.imagePath}`;
     }

@@ -32,17 +32,17 @@ const orderSchema = new mongoose.Schema(
         orderStatus: {
             type: String,
             enum: [
-                "Processing",
-                "Pending",
-                "Packed",
-                "Shipped",
-                "Delivered",
-                "CANCELLATION_REQUESTED",
-                "REFUND_REQUESTED",
-                "Cancelled",
-                "Refunded",
-                "Failed",
-                "Out for Delivery",
+                "Processing",  //Initiated by system while new order created
+                "Pending", // after Payment Complete
+                "Packed", // set by admin
+                "Shipped", // set by admin
+                "Delivered", // set by admin
+                "CANCELLATION_REQUESTED", // user make req 
+                "REFUND_REQUESTED", // user make req for 
+                "Cancelled", // set by admin
+                "Refunded", // set by admin
+                "Out for Delivery", // set by admin
+                "Failed", // it could be set by admin or payment failure
             ],
             default: "Processing",
         },

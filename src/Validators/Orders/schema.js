@@ -22,7 +22,19 @@ const PAGINATION_SCHEMA_VALIDATOR = Joi.object({
 })
 
 const UPDATE_ORDER_STATUS_VALIDATION_SCHEMA = Joi.object({
-    status: Joi.string().trim().required()
+    status: Joi.string().trim()
+        .valid(
+            "Pending",
+            "Packed",
+            "Shipped",
+            "Failed",
+            "Refunded",
+            "Out for Delivery",
+            "Delivered",
+            "Refunded",
+            "Cancelled"
+        )
+        .required()
 })
 
 const ALL_ORDER_SCHEMA_VALIDATION = Joi.object({
