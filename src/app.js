@@ -9,6 +9,7 @@ import { config } from "./config/_config.js";
 import logger from "./logger/index.js";
 import globalErrorHandler from "./middleware/ErrorHandler.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
+import { nanoid } from "nanoid";
 
 const app = express();
 app.use(express.json());
@@ -45,28 +46,21 @@ app.use(
  */
 
 const ipLimiter = rateLimit({
-    windowMs: 60000 * 30,// 30 minutes
-    max: 500 * 2,
+    windowMs: 60000 * 5,// 30 minutes
+    max: 5, //5 Request.
     message: 'Too many requests Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
 
     keyGenerator: (req) => {
-        let clientIP = '';
-
-        if (req.headers['x-forwarded-for']) {
-            clientIP = req.headers['x-forwarded-for'].split(',')[0].trim();
-        } else {
-            clientIP = req.ip;
-        }
-        const ip = clientIP;
-        return ip;
+        const uniqueID = nanoid(10)
+        return uniqueID;
     }
 });
 
 // app.use(ipLimiter);
 
-app.use('/api', Route);
+app.use('/api', ipLimiter, Route);
 app.use('/api/admin', AdminRoute);
 
 // Razorpay-webhook 

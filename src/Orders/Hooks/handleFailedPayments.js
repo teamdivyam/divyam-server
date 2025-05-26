@@ -39,7 +39,7 @@ const handleFailedPayments = async (paymentInfo) => {
             {
                 gatewayOrderId: orderId,
                 status: "failed",
-                paymentMethod: "failed"
+                paymentMethod: "null",
             }
         );
 

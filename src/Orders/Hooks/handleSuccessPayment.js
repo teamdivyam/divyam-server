@@ -4,6 +4,7 @@ import OrderModel from "../orderModel.js"
 import TransactionModel from "../transactionModel.js";
 import logger from "../../logger/index.js";
 
+// for success payments
 const handleCapturedPayments = async (payment) => {
     const session = await mongoose.startSession();
     session.startTransaction()
