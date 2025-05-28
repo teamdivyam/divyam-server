@@ -13,7 +13,8 @@ import isEmailUnique from "../utils/isEmailUnique.js";
 import {
     RegisterUserValidateSchema,
     otpValidateSchema,
-    UPDATE_USER_VALIDATE_SCHEMA
+    UPDATE_USER_VALIDATE_SCHEMA,
+    VALIDATE_USER_ADDRESS
 } from "../Validators/users/schema.js";
 import logger from "../logger/index.js";
 
@@ -33,7 +34,7 @@ const RegisterUser = async (req, res, next) => {
          * 
          */
 
-        const newOtp = generateOtp(4);
+        const generateOTP = generateOtp(4);
 
         // SEND OTP THROUGH  SMS_API
         // const OTP = await sendOTP(newOtp, reqDATA?.mobileNum)
@@ -42,19 +43,13 @@ const RegisterUser = async (req, res, next) => {
         // if (OTP.return == false) {
         //     return next(createHttpError(401, "SMS_API_ERROR"))
         // }
-
-        // END-- SMS_API
-
-
-
         // USER MODEL...
         const isUserExists = await userModel.findOne({ mobileNum: reqDATA?.mobileNum })
 
         // FOR NEW USERS..
         if (!isUserExists) {
             const user_ID = nanoid();
-            const newOTP = await otpModel.create({ otp: newOtp, userId: null, isVerified: false });
-
+            const newOTP = await otpModel.create({ otp: generateOTP, userId: null, isVerified: false });
             const user = await userModel.create({ id: user_ID, mobileNum: reqDATA.mobileNum, otp: newOTP?._id });
 
             newOTP.userId = user._id;
@@ -63,7 +58,7 @@ const RegisterUser = async (req, res, next) => {
             return res.json(
                 {
                     success: true,
-                    otp: newOtp
+                    otp: generateOTP
                 }
             )
 
@@ -71,14 +66,14 @@ const RegisterUser = async (req, res, next) => {
 
         // FOR EXISTING USERS..
         try {
-            const UserOtp = await otpModel.create({ otp: newOtp, userId: isUserExists._id });
+            const UserOtp = await otpModel.create({ otp: generateOTP, userId: isUserExists._id });
             isUserExists.otp = UserOtp._id;
 
             await isUserExists.save();
 
             return res.status(200).json({
                 success: true,
-                otp: newOtp
+                otp: generateOTP
             });
         } catch (error) {
             return next(createHttpError(401, "Something went wrong.."))
@@ -424,7 +419,7 @@ const GUEST_USER = async (req, res, next) => {
     }
 }
 
-const LOGOUT_USER = (req, res, next) => {
+const LOGOUT_USER = async (req, res, next) => {
     try {
         res.clearCookie('token', { path: "/" });
 
@@ -440,6 +435,119 @@ const LOGOUT_USER = (req, res, next) => {
     }
 }
 
+// Address
+
+const ADD_NEW_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+
+        const { error, value } = VALIDATE_USER_ADDRESS.validate(req.body);
+        const { area, landMark, pinCode, state, contactNumber, city } = req.body;
+
+        if (error) {
+            return next(createHttpError(error?.details[0].message));
+        }
+
+        const Insert_New_Address = await userModel.findById(USER_ID);
+
+        Insert_New_Address.address.push({
+            area,
+            landMark,
+            city,
+            state,
+            contactNumber,
+            pinCode,
+        });
+
+        await Insert_New_Address.save();
+
+
+
+        // add new address
+        // const Insert_New_Address = await userModel.findByIdAndUpdate(USER_ID,
+        //     {
+        //         $push: {
+        //             address: {
+        //                 area,
+        //                 landMark,
+        //                 state,
+        //                 pinCode,
+        //                 contactNumber
+        //             }
+        //         }
+
+        //     }
+        // ).lean();
+
+        if (!Insert_New_Address) {
+            return next(createHttpError(400, "Something wen wrong"))
+        }
+
+        return res.status(200).json(
+            {
+                success: true,
+                msg: "successfully new address added"
+            }
+        )
+
+    } catch (error) {
+        return next(createHttpError(400, "Internal error", error))
+    }
+}
+
+const SET_DEFAULT_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+        const ADDRESS_ID = req.params.ADDRESS_ID;
+
+        const SET_DEFAULT_ADDRESS = await userModel.findById(USER_ID);
+
+        const updatedAddress = SET_DEFAULT_ADDRESS.address.map((item) => {
+            if (item._id == ADDRESS_ID) {
+                item.isActive = true;
+                return;
+            }
+        });
+        console.log(updatedAddress);
+
+
+        // SET_DEFAULT_ADDRESS.address = updatedAddress;
+        // await SET_DEFAULT_ADDRESS.save()
+
+        return res.status(200).json(
+            {
+                msg: "Success",
+                address: updatedAddress
+            }
+        )
+
+    } catch (error) {
+        return next(createHttpError(400, "Something went wrong"))
+    }
+}
+
+
+const GET_ALL_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+        const userAddress = await userModel.findById(USER_ID).lean();
+
+        if (!userAddress) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+
+        return res.status(200).json({
+            msg: "Success",
+            address: userAddress.address
+        })
+
+
+    } catch (error) {
+        returnnext(createHttpError(400, "Internal error"))
+    }
+}
+
+
 export {
     RegisterUser,
     VERIFY_OTP,
@@ -448,5 +556,8 @@ export {
     LOGOUT_USER,
     USER_PRFOILE,
     WHOAMI,
-    GUEST_USER
+    GUEST_USER,
+    ADD_NEW_ADDRESS,
+    GET_ALL_ADDRESS,
+    SET_DEFAULT_ADDRESS
 }
