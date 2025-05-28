@@ -6,10 +6,10 @@ const address = new mongoose.Schema({
     landmark: { type: String, },
     city: { type: String },
     state: { type: String },
-    contactNumber: { type: Number, required: true },
+    contactNumber: { type: Number },
     pinCode: { type: String },
     area: { type: String },
-    isActive: { type: String, default: false }
+    isActive: { type: Boolean, default: false }
 });
 
 const userSchema = new mongoose.Schema({

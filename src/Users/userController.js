@@ -76,6 +76,7 @@ const RegisterUser = async (req, res, next) => {
                 otp: generateOTP
             });
         } catch (error) {
+            console.log(error);
             return next(createHttpError(401, "Something went wrong.."))
         }
 
@@ -495,6 +496,50 @@ const ADD_NEW_ADDRESS = async (req, res, next) => {
     }
 }
 
+const UPDATE_EXISTING_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+        const ADDRESS_ID = req.params.ADDRESS_ID;
+
+        const { error, value } = VALIDATE_USER_ADDRESS.validate(req.body);
+        const { area, landMark, pinCode, state, contactNumber, city } = req.body;
+
+        const user = await userModel.findById(USER_ID);
+
+        if (!user) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+
+        const UpdatedValue = {
+            area, landMark, pinCode, state, contactNumber, city
+        }
+
+        const Updated_Address = user.address.map((item) => {
+            let result = []
+            if (item._id === ADDRESS_ID) {
+                result.push(UpdatedValue);
+            }
+            result.push(item);
+            return result
+        })
+
+        user.address = Updated_Address;
+        await user.save();
+
+
+        // On Success
+        return res.status(200).json(
+            {
+                success: true,
+                msg: "successfully Updated address with new value"
+            }
+        )
+
+    } catch (error) {
+        return next(createHttpError(400, "Internal error"))
+    }
+}
+
 const SET_DEFAULT_ADDRESS = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
@@ -530,23 +575,62 @@ const SET_DEFAULT_ADDRESS = async (req, res, next) => {
 const GET_ALL_ADDRESS = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
-        const userAddress = await userModel.findById(USER_ID).lean();
+        const user = await userModel.findById(USER_ID).lean();
 
-        if (!userAddress) {
+        if (!user || !user.address) {
             return next(createHttpError(400, "Something went wrong"))
+        }
+
+        if (!user.address.length) {
+            return next(createHttpError(400, "Address is not available at this moment"))
         }
 
         return res.status(200).json({
             msg: "Success",
-            address: userAddress.address
+            address: user.address
         })
 
 
     } catch (error) {
-        returnnext(createHttpError(400, "Internal error"))
+        return next(createHttpError(400, "Internal error"))
     }
 }
 
+
+const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+        const ADDRESS_ID = req.params.ADDRESS_ID;
+
+        if (!USER_ID || !ADDRESS_ID) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+        const user = await userModel.findById(USER_ID);
+
+        console.log(user);
+
+        if (!user.address) {
+            return next(createHttpError(400, "Address is not available at this moment"))
+        }
+
+        if (!user) {
+            return next(createHttpError(400, "Something went wrong"))
+        }
+
+        user.address.pull({ _id: ADDRESS_ID })
+        await user.save();
+
+
+        return res.status(200).json(
+            {
+                success: true,
+                msg: "Address removed successfully"
+            }
+        )
+    } catch (error) {
+        return next(createHttpError(400, "Internal error."))
+    }
+}
 
 export {
     RegisterUser,
@@ -559,5 +643,7 @@ export {
     GUEST_USER,
     ADD_NEW_ADDRESS,
     GET_ALL_ADDRESS,
-    SET_DEFAULT_ADDRESS
+    SET_DEFAULT_ADDRESS,
+    DELETE_SINGLE_ADDRESS,
+    UPDATE_EXISTING_ADDRESS
 }

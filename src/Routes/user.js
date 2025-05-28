@@ -3,11 +3,13 @@ import rateLimit from "express-rate-limit";
 import authUser from "../middleware/authUser.js";
 import {
     ADD_NEW_ADDRESS,
+    DELETE_SINGLE_ADDRESS,
     GET_ALL_ADDRESS,
     GUEST_USER,
     LOGOUT_USER,
     RegisterUser,
     SET_DEFAULT_ADDRESS,
+    UPDATE_EXISTING_ADDRESS,
     UPDATE_PROFILE_PICTURE,
     UpdateUser,
     USER_PRFOILE,
@@ -64,9 +66,11 @@ Route.patch('/user/change-profile-pic', authUser,
     Upload.single("profile"), UPDATE_PROFILE_PICTURE);
 
 // ADDRESS
-Route.get('/user/address', authUser, GET_ALL_ADDRESS);
-Route.patch('/user/address', authUser, ADD_NEW_ADDRESS);
-Route.get('/user/address/:ADDRESS_ID', authUser, SET_DEFAULT_ADDRESS);
+Route.get('/user/address', authUser, GET_ALL_ADDRESS); //get-address
+Route.patch('/user/address', authUser, ADD_NEW_ADDRESS); // create New address
+Route.patch('/user/address/:ADDRESS_ID', authUser, UPDATE_EXISTING_ADDRESS); // update existing address
+Route.get('/user/address/:ADDRESS_ID', authUser, SET_DEFAULT_ADDRESS); // set-default-address
+Route.delete('/user/address/:ADDRESS_ID', authUser, DELETE_SINGLE_ADDRESS); //del-address
 //  PACKAGES
 Route.get('/packages', GET_ALL_PACKAGE_FOR_USERS);
 Route.get('/featured-package', GET_ALL_FEATURED_PACKAGE);
