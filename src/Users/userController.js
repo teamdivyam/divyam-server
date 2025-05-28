@@ -462,24 +462,6 @@ const ADD_NEW_ADDRESS = async (req, res, next) => {
 
         await Insert_New_Address.save();
 
-
-
-        // add new address
-        // const Insert_New_Address = await userModel.findByIdAndUpdate(USER_ID,
-        //     {
-        //         $push: {
-        //             address: {
-        //                 area,
-        //                 landMark,
-        //                 state,
-        //                 pinCode,
-        //                 contactNumber
-        //             }
-        //         }
-
-        //     }
-        // ).lean();
-
         if (!Insert_New_Address) {
             return next(createHttpError(400, "Something wen wrong"))
         }
@@ -502,6 +484,10 @@ const UPDATE_EXISTING_ADDRESS = async (req, res, next) => {
         const ADDRESS_ID = req.params.ADDRESS_ID;
 
         const { error, value } = VALIDATE_USER_ADDRESS.validate(req.body);
+        if (error) {
+            return next(createHttpError(400, error?.details[0].message))
+        }
+
         const { area, landMark, pinCode, state, contactNumber, city } = req.body;
 
         const user = await userModel.findById(USER_ID);
@@ -510,20 +496,22 @@ const UPDATE_EXISTING_ADDRESS = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong"))
         }
 
-        const UpdatedValue = {
+        const updatedValue = {
             area, landMark, pinCode, state, contactNumber, city
         }
 
-        const Updated_Address = user.orderAddress.map((item) => {
-            let result = []
-            if (item._id === ADDRESS_ID) {
-                result.push(UpdatedValue);
-            }
-            result.push(item);
-            return result
-        })
+        let addressFound = false;
 
-        user.address = Updated_Address;
+        const updatedAddresses = user.orderAddress.map((item) => {
+            if (item._id.toString() === ADDRESS_ID.toString()) {
+                addressFound = true;
+                return { ...item.toObject(), ...updatedValue }; // preserve _id
+            }
+            return item;
+        });
+
+
+        user.orderAddress = updatedAddresses;
         await user.save();
 
         // On Success
@@ -544,21 +532,23 @@ const SET_DEFAULT_ADDRESS = async (req, res, next) => {
         const USER_ID = req.user.id;
         const ADDRESS_ID = req.params.ADDRESS_ID;
 
-        const SET_DEFAULT_ADDRESS = await userModel.findById(USER_ID);
+        const user = await userModel.findById(USER_ID);
 
-        const updatedAddress = SET_DEFAULT_ADDRESS.orderAddress.map((item) => {
-            if (item._id == ADDRESS_ID) {
-                item.isActive = true;
-                return;
+        const updatedAddress = user.orderAddress.map((item) => {
+            if (item._id.toString() == ADDRESS_ID.toString()) {
+                if (item.isActive === true) {
+                    return item.isActive = false;
+                }
+                return { ...item.toObject(), isActive: true }
             }
+            return item;
         });
 
-        console.log(updatedAddress);
+        user.orderAddress = updatedAddress;
+        await user.save();
 
 
-        // SET_DEFAULT_ADDRESS.address = updatedAddress;
-        // await SET_DEFAULT_ADDRESS.save()
-
+        // onSuccess
         return res.status(200).json(
             {
                 msg: "Success",

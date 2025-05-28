@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 const orderAddress = new mongoose.Schema({
     area: { type: String, },
-    landmark: { type: String, },
+    landMark: { type: String, },
     city: { type: String },
     state: { type: String },
     contactNumber: { type: Number },

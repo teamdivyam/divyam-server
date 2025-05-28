@@ -69,7 +69,7 @@ Route.patch('/user/change-profile-pic', authUser,
 Route.get('/user/address', authUser, GET_ALL_ADDRESS); //get-address
 Route.patch('/user/address', authUser, ADD_NEW_ADDRESS); // create New address
 Route.patch('/user/address/:ADDRESS_ID', authUser, UPDATE_EXISTING_ADDRESS); // update existing address
-Route.get('/user/address/:ADDRESS_ID', authUser, SET_DEFAULT_ADDRESS); // set-default-address
+Route.patch('/user/address/default/:ADDRESS_ID', authUser, SET_DEFAULT_ADDRESS); // set-default-address
 Route.delete('/user/address/:ADDRESS_ID', authUser, DELETE_SINGLE_ADDRESS); //del-address
 //  PACKAGES
 Route.get('/packages', GET_ALL_PACKAGE_FOR_USERS);
