@@ -11,7 +11,7 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     packageID: Joi.string().pattern(isObjectId).required(),
     qty: Joi.number().positive().max(5).required(),
     startDate: Joi.date().iso().greater(
-        moment().add(1, 'day').toDate()
+        moment().add(0, 'day').toDate()
     ).required(),
     endDate: Joi.date().iso().min(Joi.ref("startDate")).required(),
 });
