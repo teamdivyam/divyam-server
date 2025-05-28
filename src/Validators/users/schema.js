@@ -28,7 +28,6 @@ const UPDATE_USER_VALIDATE_SCHEMA = Joi.object({
     areaPinCode: Joi.string().pattern(isAreaPin_SIX_DIGIT).required().label("PinCode")
 });
 
-
 const VALIDATE_USER_ADDRESS = Joi.object({
     area: Joi.string().min(3).max(65).required(),
     city: Joi.string().min(3).max(65).required(),

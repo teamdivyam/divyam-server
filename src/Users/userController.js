@@ -451,7 +451,7 @@ const ADD_NEW_ADDRESS = async (req, res, next) => {
 
         const Insert_New_Address = await userModel.findById(USER_ID);
 
-        Insert_New_Address.address.push({
+        Insert_New_Address.orderAddress.push({
             area,
             landMark,
             city,
@@ -514,7 +514,7 @@ const UPDATE_EXISTING_ADDRESS = async (req, res, next) => {
             area, landMark, pinCode, state, contactNumber, city
         }
 
-        const Updated_Address = user.address.map((item) => {
+        const Updated_Address = user.orderAddress.map((item) => {
             let result = []
             if (item._id === ADDRESS_ID) {
                 result.push(UpdatedValue);
@@ -525,7 +525,6 @@ const UPDATE_EXISTING_ADDRESS = async (req, res, next) => {
 
         user.address = Updated_Address;
         await user.save();
-
 
         // On Success
         return res.status(200).json(
@@ -547,12 +546,13 @@ const SET_DEFAULT_ADDRESS = async (req, res, next) => {
 
         const SET_DEFAULT_ADDRESS = await userModel.findById(USER_ID);
 
-        const updatedAddress = SET_DEFAULT_ADDRESS.address.map((item) => {
+        const updatedAddress = SET_DEFAULT_ADDRESS.orderAddress.map((item) => {
             if (item._id == ADDRESS_ID) {
                 item.isActive = true;
                 return;
             }
         });
+
         console.log(updatedAddress);
 
 
@@ -577,17 +577,17 @@ const GET_ALL_ADDRESS = async (req, res, next) => {
         const USER_ID = req.user.id;
         const user = await userModel.findById(USER_ID).lean();
 
-        if (!user || !user.address) {
+        if (!user || !user.orderAddress) {
             return next(createHttpError(400, "Something went wrong"))
         }
 
-        if (!user.address.length) {
+        if (!user.orderAddress.length) {
             return next(createHttpError(400, "Address is not available at this moment"))
         }
 
         return res.status(200).json({
             msg: "Success",
-            address: user.address
+            address: user.orderAddress
         })
 
 
@@ -607,9 +607,7 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
         }
         const user = await userModel.findById(USER_ID);
 
-        console.log(user);
-
-        if (!user.address) {
+        if (!user.orderAddress) {
             return next(createHttpError(400, "Address is not available at this moment"))
         }
 
@@ -617,9 +615,8 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong"))
         }
 
-        user.address.pull({ _id: ADDRESS_ID })
+        user.orderAddress.pull({ _id: ADDRESS_ID })
         await user.save();
-
 
         return res.status(200).json(
             {

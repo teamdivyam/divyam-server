@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 
-const address = new mongoose.Schema({
+const orderAddress = new mongoose.Schema({
     area: { type: String, },
     landmark: { type: String, },
     city: { type: String },
@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema({
     address: { type: String },
     areaPin: { type: String },
     orders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order', unique: true }],
-    address: [{
-        type: address,
+    orderAddress: [{
+        type: orderAddress,
         default: "null"
     }],
     role: {
