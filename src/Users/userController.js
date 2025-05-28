@@ -534,25 +534,25 @@ const SET_DEFAULT_ADDRESS = async (req, res, next) => {
 
         const user = await userModel.findById(USER_ID);
 
-        const updatedAddress = user.orderAddress.map((item) => {
+        if (!user) {
+            return next(createHttpError(400, "Something went wrong.."))
+        }
+
+        const defaultAddress = user.orderAddress.map((item) => {
             if (item._id.toString() == ADDRESS_ID.toString()) {
-                if (item.isActive === true) {
-                    return item.isActive = false;
-                }
                 return { ...item.toObject(), isActive: true }
             }
-            return item;
+            return { ...item.toObject(), isActive: false }
         });
 
-        user.orderAddress = updatedAddress;
+        user.orderAddress = defaultAddress;
         await user.save();
-
 
         // onSuccess
         return res.status(200).json(
             {
-                msg: "Success",
-                address: updatedAddress
+                success: true,
+                defaultAddress
             }
         )
 
