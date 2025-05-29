@@ -95,6 +95,7 @@ const LoginAdmin = async (req, res, next) => {
     try {
         const { error, value } = AdminLoginValidateSchema.validate(req.body)
         // Validate body..
+
         if (error) {
             logger.info(error)
             return next(createHttpError(401, `${error?.details[0]?.message}`))
@@ -135,7 +136,7 @@ const LoginAdmin = async (req, res, next) => {
 
         const payload = { id: isAdmin._id, role: isAdmin.role };
 
-        const accessToken = jwt.sign(payload, config.ADMIN_SECRET, { expiresIn: "8h" });
+        const accessToken = jwt.sign(payload, config.ADMIN_SECRET, { expiresIn: "7h" });
 
         // Save Token Inside DB TOO..
         isAdmin.accessToken = accessToken;

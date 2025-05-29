@@ -560,6 +560,34 @@ const SET_DEFAULT_ADDRESS = async (req, res, next) => {
     }
 }
 
+const GET_PRIMARY_ADDRESS = async (req, res, next) => {
+    try {
+        const USER_ID = req.user.id;
+
+        const user = await userModel.findById(USER_ID).lean();
+
+        if (!user) {
+            return next(createHttpError(400, "Something went wrong."));
+        }
+
+        const primaryAddress = user.orderAddress.filter((item) => {
+            if (item.isActive === true) {
+                return item
+            }
+        });
+
+        return res.status(200).
+            json(
+                {
+                    success: true,
+                    shippingAddress: primaryAddress
+                }
+            )
+    } catch (error) {
+        return next(createHttpError(400, "Something went wrong.."))
+    }
+}
+
 
 const GET_ALL_ADDRESS = async (req, res, next) => {
     try {
@@ -631,5 +659,6 @@ export {
     GET_ALL_ADDRESS,
     SET_DEFAULT_ADDRESS,
     DELETE_SINGLE_ADDRESS,
-    UPDATE_EXISTING_ADDRESS
+    UPDATE_EXISTING_ADDRESS,
+    GET_PRIMARY_ADDRESS
 }

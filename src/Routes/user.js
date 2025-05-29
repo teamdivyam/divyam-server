@@ -5,6 +5,7 @@ import {
     ADD_NEW_ADDRESS,
     DELETE_SINGLE_ADDRESS,
     GET_ALL_ADDRESS,
+    GET_PRIMARY_ADDRESS,
     GUEST_USER,
     LOGOUT_USER,
     RegisterUser,
@@ -70,7 +71,9 @@ Route.get('/user/address', authUser, GET_ALL_ADDRESS); //get-address
 Route.patch('/user/address', authUser, ADD_NEW_ADDRESS); // create New address
 Route.patch('/user/address/:ADDRESS_ID', authUser, UPDATE_EXISTING_ADDRESS); // update existing address
 Route.patch('/user/address/active/:ADDRESS_ID', authUser, SET_DEFAULT_ADDRESS); // set-default-address
+Route.get('/user/address/primary', authUser, GET_PRIMARY_ADDRESS)
 Route.delete('/user/address/:ADDRESS_ID', authUser, DELETE_SINGLE_ADDRESS); //del-address
+
 //  PACKAGES
 Route.get('/packages', GET_ALL_PACKAGE_FOR_USERS);
 Route.get('/featured-package', GET_ALL_FEATURED_PACKAGE);
@@ -90,6 +93,10 @@ Route.post('/verify-payments', verifyPayments);
 //call guest api when user visit for the first time 
 Route.post('/session/guest', isGuestUser, GUEST_USER);
 Route.post('/user/save-cart', isGuestUser, SAVE_CART);
+
+
+// ------LOGIN_END_POINT
+Route.post('/auth',)
 
 // LOG-out-user
 Route.get('/logout', authUser, LOGOUT_USER)
