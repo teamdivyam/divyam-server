@@ -200,7 +200,7 @@ const USER_PRFOILE = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
         const User = await userModel.findById(USER_ID,
-            { accessToken: 0, updatedAt: 0, role: 0, _id: 0, otp: 0, orders: 0, __v: 0, createdAt: 0, orderAddress: 0 });
+            { accessToken: 0, updatedAt: 0, role: 0, otp: 0, orders: 0, __v: 0, createdAt: 0, orderAddress: 0 });
 
         if (!User) {
             return next(createHttpError(400, "Something went wrong"));
