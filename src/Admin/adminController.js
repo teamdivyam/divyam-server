@@ -63,6 +63,7 @@ const RegisterAdmin = async (req, res, next) => {
         }
 
         const uploadFile = await UploadImageOnServer(req?.file, "ADMIN");
+
         const fileName = uploadFile.fileName.split("/")[2]
         // On Success.
         const prettyData = {

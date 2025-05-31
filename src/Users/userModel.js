@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema({
     accessToken: { type: String },
     otp: { type: mongoose.Types.ObjectId, ref: "otp", require: true },
     isVerified: { type: Boolean, default: false },
+    refer: {
+        isReferrer: { type: Boolean, default: false },
+        referralId: { type: mongoose.Schema.Types.ObjectId, ref: 'referraluser' }
+    }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

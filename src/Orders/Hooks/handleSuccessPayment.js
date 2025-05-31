@@ -42,6 +42,9 @@ const handleCapturedPayments = async (payment) => {
                 paymentMethod: payment.method
             });
 
+
+
+
         if (!Transaction) {
             await session.abortTransaction();
             throw new Error("There is no transaction with this order id");

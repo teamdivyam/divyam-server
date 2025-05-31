@@ -485,7 +485,6 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
 // /items?page=${page}&limit=${limit}
 
 
-
 const GET_ALL_ORDERS = async (req, res, next) => {
     const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
 
