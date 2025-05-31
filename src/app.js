@@ -23,7 +23,6 @@ app.use((req, res, next) => {
     next();
 });
 
-
 const allowedOrigins = [
     config.ORGIN1,
     config.ORGIN2,
@@ -79,7 +78,7 @@ app.use(function (req, res, next) {
     return res.status(400).json({
         success: false,
         status: 404,
-        msg: "please try again later.."
+        msg: "please try again later || ROUTE_NOT_FOUND"
     })
 });
 

@@ -199,16 +199,14 @@ const UPDATE_PROFILE_PICTURE = async (req, res, next) => {
 const USER_PRFOILE = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
-
         const User = await userModel.findById(USER_ID,
-            { accessToken: 0, updatedAt: 0, role: 0, _id: 0, otp: 0, orders: 0, __v: 0, createdAt: 0 });
+            { accessToken: 0, updatedAt: 0, role: 0, _id: 0, otp: 0, orders: 0, __v: 0, createdAt: 0, orderAddress: 0 });
 
         if (!User) {
             return next(createHttpError(400, "Something went wrong"));
         }
 
         let formatDOB;
-
         if (User?.dob) {
             formatDOB = moment(User?.dob).format("DD/MM/YYYY");
         }
@@ -218,11 +216,10 @@ const USER_PRFOILE = async (req, res, next) => {
             profile = `${config.CLOUDFRONT_PATH}/Uploads/users/${User.avatar}`;
         }
 
-
         const user = {
             ...User._doc,
             dob: formatDOB || null,
-            avatarURL: profile
+            avatarURL: profile,
         }
 
         return res.status(200).
@@ -237,8 +234,7 @@ const USER_PRFOILE = async (req, res, next) => {
         logger.error(
             `Failed to get user profile : ${error.message}, Error stack: ${error.stack}`
         );
-
-        return next(createHttpError(400, "internal errors"))
+        return next(createHttpError(400, "Oops internal errors "))
     }
 }
 
