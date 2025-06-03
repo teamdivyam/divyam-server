@@ -308,7 +308,7 @@ const verifyPayments = async (req, res, next) => {
         const saltRound = 7
         const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
 
-        const pathToRedirect = `api/user/ordered?success=true&order=${hashOrderId}&source=${hostName}`;
+        const pathToRedirect = `/api/user/ordered?success=true&order=${hashOrderId}&source=${hostName}`;
 
         return res.redirect(pathToRedirect);
     } catch (error) {
