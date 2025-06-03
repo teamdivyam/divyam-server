@@ -6,3 +6,5 @@ node_modules/
 .env
 .notes
 .prod.env
+.TestlambdaFunction.js
+.sleep.js

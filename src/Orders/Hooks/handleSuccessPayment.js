@@ -3,6 +3,37 @@ import userModel from "../../Users/userModel.js";
 import OrderModel from "../orderModel.js"
 import TransactionModel from "../transactionModel.js";
 import logger from "../../logger/index.js";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { config } from "../../config/_config.js";
+
+const client = new LambdaClient({
+    region: config.AWS_REGION,
+    credentials: {
+        accessKeyId: config.AWS_BUCKET_KEY,
+        secretAccessKey: config.AWS_BUCKET_SECRET,
+    },
+});
+
+
+const invokeLambda = async () => {
+    const command = new InvokeCommand({
+        FunctionName: 'OrderInvoice_deploy',
+        Payload: Buffer.from(JSON.stringify({
+            success: true
+        })),
+    });
+
+    try {
+        const response = await client.send(command);
+        const payload = JSON.parse(Buffer.from(response.Payload));
+        console.log('Lambda response:', payload);
+    } catch (error) {
+        console.error('Error invoking Lambda:', error);
+    }
+}
+
+
+
 
 // for success payments
 const handleCapturedPayments = async (payment) => {
@@ -42,9 +73,6 @@ const handleCapturedPayments = async (payment) => {
                 paymentMethod: payment.method
             });
 
-
-
-
         if (!Transaction) {
             await session.abortTransaction();
             throw new Error("There is no transaction with this order id");
@@ -66,6 +94,9 @@ const handleCapturedPayments = async (payment) => {
             user.orders.push(Order._id);
             await user.save();
         }
+
+        // call lambda function
+
 
         // ON-SUCCESS
         await session.commitTransaction();

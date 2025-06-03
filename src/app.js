@@ -73,6 +73,20 @@ app.get('/health', (req, res, next) => {
     )
 });
 
+app.get('/user', async (req, res, next) => {
+    try {
+        const hostName = req.hostname;
+        const host = req.host;
+        const data = { hostName, host };
+
+        res.json({
+            data
+        });
+    } catch (error) {
+        return res({ error })
+    }
+})
+
 // for-undeclared-routes
 app.use(function (req, res, next) {
     return res.status(400).json({
