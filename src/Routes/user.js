@@ -90,7 +90,7 @@ Route.post('/check-pincode', PINCODE_VERIFY);
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', verifyPayments);
-Route.get('/user/ordered', authUser, INIT_FOR_INVOICE) // open new page where user ca download their invoice
+Route.get('/user/ordered', INIT_FOR_INVOICE) // open new page where user ca download their invoice
 
 //call guest api when user visit for the first time 
 Route.post('/session/guest', isGuestUser, GUEST_USER);
