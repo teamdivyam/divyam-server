@@ -12,6 +12,8 @@ import AreaZoneModel from "../AreaZone/areaZoneModel.js";
 import moment from "moment";
 import cartTrackingModel from "./cartTrackingModel.js";
 import bookingModel from "./bookingModel.js";
+import bcrypt from "bcryptjs";
+
 
 import {
     TRACK_CART_SCHEMA_VALIDATOR,
@@ -299,14 +301,16 @@ const verifyPayments = async (req, res, next) => {
         }
 
         Order.gateway = rzrPaygatewayKeyandSignature;
-
         await Order.save();
 
-        return res.status(200).json({
-            status: "success",
-            msg: "Payment has been completed successfully."
-        });
+        // redirect to another location so he can download order Invoice
+        const hostName = req.hostName;
+        const saltRound = 7
+        const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
 
+        const pathToRedirect = `api/user/ordered?success=true&order=${hashOrderId}&source=${hostName}`;
+
+        return res.redirect(pathToRedirect);
     } catch (error) {
         logger.error(
             `Failed to verify razaorpay payment: ${error.message}, Error stack: ${error.stack}`
@@ -314,6 +318,20 @@ const verifyPayments = async (req, res, next) => {
         return next(createHttpError(500, "Payment verification failed"));
     }
 }
+
+
+const INIT_FOR_INVOICE = async (req, res, next) => {
+    try {
+        const query = req.query;
+
+        return res.status(200).
+            json(query);
+
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
 
 
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
@@ -694,5 +712,5 @@ export {
     verifyPayments,
     ORDER_CANCEL,
     SAVE_CART,
-
+    INIT_FOR_INVOICE
 }
