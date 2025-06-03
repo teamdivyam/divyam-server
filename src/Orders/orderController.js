@@ -304,13 +304,13 @@ const verifyPayments = async (req, res, next) => {
         await Order.save();
 
         // redirect to another location so he can download order Invoice
-        const hostName = req.hostName;
+        const hostName = req.host;
         const domainName = "https://www.divaym.com"
         const saltRound = 7
         const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
 
         // const pathToRedirect = `${domainName}/api/user/ordered?success=true&order=${hashOrderId}&source=${hostName}`;
-        const redirectPath = `${domainName}/order?success=true&orderId=${hashOrderId}&source=${hostName}`
+        const redirectPath = `${domainName}/about?success=true&orderId=${hashOrderId}&source=${hostName}`
 
         res.redirect(redirectPath);
     } catch (error) {
