@@ -305,7 +305,7 @@ const verifyPayments = async (req, res, next) => {
 
         // redirect to another location so he can download order Invoice
         const hostName = req.host;
-        const domainName = "https://www.divaym.com"
+        const domainName = "https://api.divaym.com"
         const saltRound = 7
         const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
 
