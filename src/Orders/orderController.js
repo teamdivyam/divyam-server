@@ -309,10 +309,13 @@ const verifyPayments = async (req, res, next) => {
         const saltRound = 7
         const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
 
-        // const pathToRedirect = `${domainName}/api/user/ordered?success=true&order=${hashOrderId}&source=${hostName}`;
-        const redirectPath = `${domainName}/about?success=true&orderId=${hashOrderId}&source=${hostName}`
+        const redirectPath = `${domainName}/ordered?success=true&orderId=${hashOrderId}`;
+        const resBody = {
+            success: true,
+            url: redirectPath
+        }
 
-        res.redirect(redirectPath);
+        return res.status(200).json(resBody);
     } catch (error) {
         logger.error(
             `Failed to verify razaorpay payment: ${error.message}, Error stack: ${error.stack}`
