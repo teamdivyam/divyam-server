@@ -5,6 +5,7 @@ import {
     CHANGE_ADMIN_PASSWORD,
     DELETE_SINGLE_USERS,
     GET_ALL_USERS,
+    GET_ORDER_DETAILS,
     GET_PRESIGNED_URL,
     GET_SINGLE_USERS,
     LoginAdmin,
@@ -23,6 +24,7 @@ import {
     UPDATE_PACKAGE
 } from "../Package/PackageController.js";
 import {
+    ATTACH_INVOICE_WITH_ORDER,
     CHANGE_ORDER_STATUS,
     GET_ALL_ORDERS,
     GET_ALL_ORDERS_BY_USER_ID,
@@ -97,6 +99,8 @@ AdminRoute.get('/order/', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/:ORDER_ID', isAdmin, VIEW_SINGLE_ORDER_ADMIN);
 AdminRoute.get('/order-filter', isAdmin, GET_FILTERED_ORDER);
 AdminRoute.patch('/order/:ORDER_ID', isAdmin, CHANGE_ORDER_STATUS);
+AdminRoute.post('/order-details', GET_ORDER_DETAILS); // For Internal comunication
+AdminRoute.post('/attach-invoice', ATTACH_INVOICE_WITH_ORDER)
 
 // USER-INFO-MANAGED_BY_ADMIN
 

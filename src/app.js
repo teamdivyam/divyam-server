@@ -73,16 +73,6 @@ app.get('/health', (req, res, next) => {
     )
 });
 
-// app.get('/ordered', async (req, res, next) => {
-//     try {
-//         const hostName = req.hostname;
-//         const redirectPath = `/ordered?success=true&order=d542513f616115c6b97c84200519da24&source=${hostName}`;
-
-//     } catch (error) {
-//         return res({ error })
-//     }
-// })
-
 // for-undeclared-routes
 app.use(function (req, res, next) {
     return res.status(400).json({

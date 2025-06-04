@@ -79,12 +79,10 @@ Route.delete('/user/address/:ADDRESS_ID', authUser, DELETE_SINGLE_ADDRESS); //de
 Route.get('/packages', GET_ALL_PACKAGE_FOR_USERS);
 Route.get('/featured-package', GET_ALL_FEATURED_PACKAGE);
 Route.get('/package/:SLUG', GET_SINGLE_PACKAGE_FOR_USERS);
-
 Route.get('/user/orders', authUser, GET_ALL_ORDERS_BY_USER_ID);  //req.user-All_Orders
 Route.get('/user/order/:ORDER_ID', authUser, GET_SINGLE_ORDERS);  //Single_Orders
 Route.get('/user/order-cancel/:ORDER_ID', authUser, ORDER_CANCEL);  //cancel-order
 Route.post('/availability-check', CHECK_AREA_STATUS);
-
 Route.post('/check-pincode', PINCODE_VERIFY);
 
 // Route.post('/new-order', authUser, NEW_ORDER);

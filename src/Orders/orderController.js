@@ -325,6 +325,35 @@ const verifyPayments = async (req, res, next) => {
 }
 
 
+const ATTACH_INVOICE_WITH_ORDER = async (req, res, nexr) => {
+    console.log("ATTACHED_INVOICE_WITH_ORDER", req.body);
+    try {
+        const { invoiceUrl, orderId } = req.body;
+
+        const isValidOrder = await OrderModel.findOne({ orderId: orderId });
+
+        if (!isValidOrder) {
+            return next(createHttpError(400, "Invalid order id"))
+        }
+
+        const booking = await bookingModel.findById(isValidOrder.booking);
+        booking.orderInvoice = invoiceUrl;
+        await isValidOrder.save();
+
+        // on Success
+        return res.status(200).
+            json(
+                {
+                    success: true,
+                    msg: "Successfully added invoice to it Order"
+                }
+            )
+    } catch (error) {
+        return next(createHttpError(400, `Internal Error ${error}`))
+    }
+}
+
+
 const INIT_FOR_INVOICE = async (req, res, next) => {
     try {
         const query = req.query;
@@ -717,5 +746,6 @@ export {
     verifyPayments,
     ORDER_CANCEL,
     SAVE_CART,
-    INIT_FOR_INVOICE
+    INIT_FOR_INVOICE,
+    ATTACH_INVOICE_WITH_ORDER
 }

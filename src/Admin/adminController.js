@@ -17,8 +17,6 @@ import orderModel from '../Orders/orderModel.js';
 
 import UploadImageOnServer from "../services/UploadImageOnServer.js";
 import handleImage from "../utils/handleImage.js";
-
-
 import DeliveryPartnerModel from "../DeliveryPartners/DeliveryPartnerModel.js";
 import verifyRecaptcha from "../utils/verifyRecaptchaToken.js";
 import getPreSignedURL from "../services/getPreSignedUrl.js";
@@ -577,6 +575,53 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
 }
 
 
+// Only for internal Communication
+const GET_ORDER_DETAILS = async (req, res, next) => {
+    try {
+
+        const { orderId } = req.body;
+        const Order = await orderModel.findOne({ orderId }, { __v: 0, notes: 0 }).populate({
+            path: "product",
+            populate: {
+                path: 'productId',
+                model: "Package",
+                select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 }
+            }
+        })
+            .populate({
+                path: "customer",
+                model: "User",
+                select: { _id: 0, __v: 0, otp: 0, accessToken: 0, }
+            })
+            .populate({
+                path: "transaction",
+                model: "Transaction",
+                select: { _id: 0, __v: 0, createdAt: 0, updatedAt: 0, user: 0, order: 0 }
+            })
+            .populate({
+                path: "booking",
+                model: "Booking",
+                select: { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 }
+            })
+            .lean();
+
+        if (!Order) {
+            return next(createHttpError(400, "Internal Error | can't fetch order details "))
+        }
+
+        const orderCompletedAt = moment(Order?.transaction?.completedAt).format("MM/DD/YYYY HH:mm:ss")
+
+        return res.status(200).json({
+            success: true,
+            Order,
+            orderCompletedAt
+        });
+
+    } catch (error) {
+        return next(createHttpError(400, `Internal error ${error}`))
+    }
+}
+
 export {
     RegisterAdmin,
     LoginAdmin,
@@ -590,5 +635,6 @@ export {
     SEARCH_AGENTS,
     GET_PRESIGNED_URL,
     ADMIN_DASHBOARD_ANALYTICS,
-    VIEW_SINGLE_ORDER_ADMIN
+    VIEW_SINGLE_ORDER_ADMIN,
+    GET_ORDER_DETAILS
 }
