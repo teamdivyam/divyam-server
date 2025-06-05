@@ -23,7 +23,7 @@ const invokeLambda = async (payload) => {
 
     try {
         const response = await client.send(command);
-        console.log(`Lambda Invoked... ${response}`);
+        console.log(`Lambda Invoked... ${JSON.stringify(response)}`);
     } catch (error) {
         console.error('Error invoking Lambda:', error);
     }

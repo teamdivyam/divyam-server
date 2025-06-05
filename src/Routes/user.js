@@ -93,8 +93,9 @@ Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca down
 Route.post('/session/guest', isGuestUser, GUEST_USER);
 Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 
+
 // ------LOGIN_END_POINT
-Route.post('/auth',)
+// Route.post('/auth',)
 
 // LOG-out-user
 Route.get('/logout', authUser, LOGOUT_USER)

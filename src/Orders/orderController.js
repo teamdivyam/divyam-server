@@ -360,7 +360,7 @@ const ATTACH_INVOICE_WITH_ORDER = async (req, res, next) => {
 
         console.log(`invoiceUrl => ${invoiceUrl}`)
         booking.orderInvoice = invoiceUrl;
-        await isValidOrder.save();
+        await booking.save();
 
         console.log("Successfully Attach Invoice With Order");
         // on Success
