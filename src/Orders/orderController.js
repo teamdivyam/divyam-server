@@ -263,10 +263,9 @@ const API_REQ = async (referralCode, userId, orderId, amount) => {
 
         const data = await res.json();
 
-        if (data.success) {
-            console.log("referral api called...");
+        if (res.ok) {
+            console.log(`Refferal APi Called ✅${data}`)
         }
-
     } catch (error) {
         console.log(`Something off ${error.message}`);
     }
@@ -319,6 +318,7 @@ const verifyPayments = async (req, res, next) => {
 
         // call Referral API
         const totalAmount = rzrVerifyPayments.amount_paid / 100;
+
         await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
 
         // redirect to another location so he can download order Invoice
