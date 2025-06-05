@@ -84,7 +84,6 @@ Route.get('/user/order/:ORDER_ID', authUser, GET_SINGLE_ORDERS);  //Single_Order
 Route.get('/user/order-cancel/:ORDER_ID', authUser, ORDER_CANCEL);  //cancel-order
 Route.post('/availability-check', CHECK_AREA_STATUS);
 Route.post('/check-pincode', PINCODE_VERIFY);
-
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', authUser, verifyPayments);

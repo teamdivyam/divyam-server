@@ -395,9 +395,10 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             return next(createHttpError(400, "Please Try agian later."))
         }
 
+
         // fetch Invoice paths 
         const Order = await OrderModel.findOne(
-            { orderId }
+            { orderId: originalOrderId }
         );
 
         if (!Order) {
