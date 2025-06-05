@@ -90,10 +90,8 @@ const handleCapturedPayments = async (payment) => {
             user.orders.push(Order._id);
             await user.save();
         }
-
         // call lambda function
-
-        const lambdaPayload = { orderId: orderId }
+        const lambdaPayload = { orderId: orderId };
         await invokeLambda(lambdaPayload);
         // ON-SUCCESS
         await session.commitTransaction();
@@ -111,4 +109,4 @@ const handleCapturedPayments = async (payment) => {
     }
 }
 
-export default handleCapturedPayments
+export { invokeLambda, handleCapturedPayments }

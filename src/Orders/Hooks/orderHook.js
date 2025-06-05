@@ -1,7 +1,7 @@
 import createHttpError from "http-errors";
 import crypto from "crypto"
 import handleFailedPayments from "./handleFailedPayments.js";
-import handleCapturedPayments from "./handleSuccessPayment.js";
+import { handleCapturedPayments } from "./handleSuccessPayment.js";
 import logger from "../../logger/index.js";
 
 export const NEW_ORDER_WEB_HOOK = async (req, res, next) => {

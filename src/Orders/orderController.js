@@ -28,6 +28,7 @@ import {
 
 import TransactionModel from "./transactionModel.js";
 import logger from "../logger/index.js";
+import { invokeLambda } from "./Hooks/handleSuccessPayment.js";
 
 
 var instance = new Razorpay({
@@ -412,6 +413,9 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         }
 
         if (!Booking.invoiceUrl) {
+            const payload = { orderId: originalOrderId };
+            await invokeLambda(payload)
+
             return res.status(200).json({
                 success: true,
                 msg: "Please wait a minutes, we are building your inoice..."
