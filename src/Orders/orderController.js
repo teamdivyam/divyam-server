@@ -414,6 +414,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
 
         if (!Booking.invoiceUrl) {
             const payload = { orderId: originalOrderId };
+            // invoke lambda function
             await invokeLambda(payload)
 
             return res.status(200).json({
