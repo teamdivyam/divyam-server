@@ -42,29 +42,6 @@ const encryptStr = (string, secret) => {
 }
 
 
-const API_REQ = async (referralCode, userId, orderId, amount) => {
-    const API = `https://api-referral.divyam.com/api/referral/create-referral-event?referralCode=${referralCode}&refereeId=${userId}&orderId=${orderId}&amount=${amount}`;
-
-    try {
-        const res = await fetch(API, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-            console.log("referral api called...");
-        }
-
-    } catch (error) {
-        console.log(`Something off ${error.message}`);
-    }
-
-
-}
 
 // ----
 
@@ -159,10 +136,9 @@ const NEW_ORDER = async (req, res, next) => {
 
         // console.log("LOG_5");
 
+        // calc price included referral code
         const totalAmount = Package.price * productQuantity;
-
         // console.log("LOG_5.1");
-
         const razorpayOrder = await instance.orders.create({
             amount: totalAmount * 100,
             currency: "INR",
@@ -222,7 +198,6 @@ const NEW_ORDER = async (req, res, next) => {
         createOrder.booking = NEW_BOOKING[0]._id;
         await createOrder.save({ session });
 
-        // console.log("LOG_6.3");
 
 
         // CREATE_TRANSACTION
@@ -245,8 +220,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Please Try again later-Internal Error"))
         }
 
-        // call Referral API
-        await API_REQ(referralCode, USER_ID, createOrder._id, totalAmount);
+
 
         await session.commitTransaction();
 
@@ -276,11 +250,35 @@ const NEW_ORDER = async (req, res, next) => {
  * NOTIFICATIONS AND OTHER QUEUE BASED SERVICES
  * 
  */
+const API_REQ = async (referralCode, userId, orderId, amount) => {
+    const API = `https://api-referral.divyam.com/api/referral/create-referral-event?referralCode=${referralCode}&refereeId=${userId}&orderId=${orderId}&amount=${amount}`;
+
+    try {
+        const res = await fetch(API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            console.log("referral api called...");
+        }
+
+    } catch (error) {
+        console.log(`Something off ${error.message}`);
+    }
+
+
+}
+
 
 const verifyPayments = async (req, res, next) => {
+    const USER_ID = req.user.id;
     try {
-        const { razorpay_signature, razorpay_order_id, razorpay_payment_id } = req.body;
-
+        const { razorpay_signature, razorpay_order_id, razorpay_payment_id, referralCode } = req.body;
         // Validate required parameters
         if (!razorpay_signature || !razorpay_order_id || !razorpay_payment_id) {
             return next(createHttpError(400, "Missing required payment parameters"));
@@ -298,6 +296,7 @@ const verifyPayments = async (req, res, next) => {
         }
 
         const rzrVerifyPayments = await instance.orders.fetch(razorpay_order_id);
+        console.log("VERIFY_API", rzrVerifyPayments);
 
         if (rzrVerifyPayments.status !== 'paid') {
             return next(createHttpError(400, "Payment not completed"));
@@ -310,7 +309,6 @@ const verifyPayments = async (req, res, next) => {
         }
 
         // Order.payment.status = rzrVerifyPayments.status;
-
         const rzrPaygatewayKeyandSignature = {
             razorpay_signature,
             razorpay_payment_id
@@ -319,9 +317,14 @@ const verifyPayments = async (req, res, next) => {
         Order.gateway = rzrPaygatewayKeyandSignature;
         await Order.save();
 
+        // call Referral API
+        const totalAmount = rzrVerifyPayments.amount_paid / 100;
+        await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
+
         // redirect to another location so he can download order Invoice
+        const secret = config.SECRET;
         const API_DOMAIN = "https://api.divaym.com"
-        const encryptedOrderId = encryptStr(razorpay_order_id, secret)
+        const encryptedOrderId = encryptStr(razorpay_order_id, secret);
         const redirectPath = `${API_DOMAIN}/user/ordered?success=true&orderId=${encryptedOrderId}`;
 
         const resBody = {

@@ -87,7 +87,7 @@ Route.post('/check-pincode', PINCODE_VERIFY);
 
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
-Route.post('/verify-payments', verifyPayments);
+Route.post('/verify-payments', authUser, verifyPayments);
 Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca download their invoice
 
 //call guest api when user visit for the first time 
