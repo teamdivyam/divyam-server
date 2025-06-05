@@ -406,8 +406,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         }
 
         // fetch invoice url for download
-        const Booking = await bookingModel.findById(Order._id);
-
+        const Booking = await bookingModel.findOne({ orderId: Order._id });
         if (!Booking) {
             return next(createHttpError(400, "Something went wrong | Internal error 2"))
         }
