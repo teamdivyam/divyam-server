@@ -88,17 +88,6 @@ const NEW_ORDER = async (req, res, next) => {
         }
         const { packageID, qty, startDate, endDate, referralCode, } = req.body;
 
-        // console.log(`LOG_DATE_FORMAT: ${startDate}-${endDate}`);
-
-        // console.log(
-        //     `
-        //     PACKAGEID: ${packageID},
-        //     QTY: ${qty},
-        //     startDate: ${startDate},
-        //     endDate: ${endDate}
-        //     `
-        // );
-
 
         const startBookingDate = new Date(startDate);
         //  new Date(startDate)
@@ -257,7 +246,7 @@ const NEW_ORDER = async (req, res, next) => {
         }
 
         // call Referral API
-        await API_REQ(referralCode, USER_ID, razorpayOrder.id, totalAmount);
+        await API_REQ(referralCode, USER_ID, createOrder._id, totalAmount);
 
         await session.commitTransaction();
 
