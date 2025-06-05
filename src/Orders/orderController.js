@@ -13,6 +13,7 @@ import moment from "moment";
 import cartTrackingModel from "./cartTrackingModel.js";
 import bookingModel from "./bookingModel.js";
 import bcrypt from "bcryptjs";
+import CryptoJS from "crypto-js";
 
 
 import {
@@ -34,6 +35,39 @@ var instance = new Razorpay({
     key_secret: config.RZR_PAY_SCRT,
 });
 
+const encryptStr = (string, secret) => {
+    var ciphertext = CryptoJS.AES.encrypt(string, secret).toString();
+    const URI_ENCODED_CIPHER_TEXT = encodeURIComponent(ciphertext);
+    return URI_ENCODED_CIPHER_TEXT;
+}
+
+
+const API_REQ = async (referralCode, userId, orderId, amount) => {
+    const API = `https://api-referral.divyam.com/api/referral/create-referral-event?referralCode=${referralCode}&refereeId=${userId}&orderId=${orderId}&amount=${amount}`;
+
+    try {
+        const res = await fetch(API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            console.log("referral api called...");
+        }
+
+    } catch (error) {
+        console.log(`Something off ${error.message}`);
+    }
+
+
+}
+
+// ----
+
 
 // Create Orders
 const NEW_ORDER = async (req, res, next) => {
@@ -52,7 +86,7 @@ const NEW_ORDER = async (req, res, next) => {
         if (error) {
             return next(createHttpError(400, error?.details.at(0).message));
         }
-        const { packageID, qty, startDate, endDate } = req.body;
+        const { packageID, qty, startDate, endDate, referralCode, } = req.body;
 
         // console.log(`LOG_DATE_FORMAT: ${startDate}-${endDate}`);
 
@@ -69,16 +103,6 @@ const NEW_ORDER = async (req, res, next) => {
         const startBookingDate = new Date(startDate);
         //  new Date(startDate)
         const endBookingDate = new Date(endDate)
-
-        // console.log(
-        //     {
-        //         startBookingDate,
-        //         endBookingDate
-        //     }
-        // );
-
-        // console.log("LOG_1");
-
 
         const productQuantity = qty || 1;
 
@@ -232,6 +256,9 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Please Try again later-Internal Error"))
         }
 
+        // call Referral API
+        await API_REQ(referralCode, USER_ID, razorpayOrder.id, totalAmount);
+
         await session.commitTransaction();
 
         return res.status(201).json({
@@ -304,17 +331,14 @@ const verifyPayments = async (req, res, next) => {
         await Order.save();
 
         // redirect to another location so he can download order Invoice
-        const hostName = req.host;
-        const domainName = "https://api.divaym.com"
-        const saltRound = 7
-        const hashOrderId = await bcrypt.hash(razorpay_order_id, saltRound);
+        const API_DOMAIN = "https://api.divaym.com"
+        const encryptedOrderId = encryptStr(razorpay_order_id, secret)
+        const redirectPath = `${API_DOMAIN}/user/ordered?success=true&orderId=${encryptedOrderId}`;
 
-        const redirectPath = `${domainName}/ordered?success=true&orderId=${hashOrderId}`;
         const resBody = {
             success: true,
             url: redirectPath
         }
-
         return res.status(200).json(resBody);
     } catch (error) {
         logger.error(
@@ -354,12 +378,58 @@ const ATTACH_INVOICE_WITH_ORDER = async (req, res, nexr) => {
 }
 
 
-const INIT_FOR_INVOICE = async (req, res, next) => {
+const cryptoDecrypto = (cipherText, secret) => {
     try {
-        const query = req.query;
+        var bytes = CryptoJS.AES.decrypt(cipherText, secret)
+        var originalText = bytes.toString(CryptoJS.enc.Utf8);
+        console.log(originalText);
+        return originalText;
+    } catch (error) {
+        console.log(error);
+    }
+}
 
-        return res.status(200).
-            json(query);
+// doenload Invoice
+const DOWNLOAD_INVOICE = async (req, res, next) => {
+    try {
+        const { orderId } = req.query;
+        if (!orderId) {
+            return next(createHttpError(400, "Something went wrong."))
+        }
+        const secret = config.SECRET;
+        const originalOrderId = cryptoDecrypto(orderId, secret);
+
+        if (!originalOrderId) {
+            return next(createHttpError(400, "Please Try agian later."))
+        }
+
+        // fetch Invoice paths 
+        const Order = await OrderModel.findOne(
+            { orderId }
+        );
+
+        if (!Order) {
+            return next(createHttpError(400, "Oops something went wrong  | Internal error 1"))
+        }
+
+        // fetch invoice url for download
+        const Booking = await bookingModel.findById(Order._id);
+
+        if (!Booking) {
+            return next(createHttpError(400, "Something went wrong | Internal error 2"))
+        }
+
+        if (!Booking.invoiceUrl) {
+            return res.status(200).json({
+                success: true,
+                msg: "Please wait a minutes, we are building your inoice..."
+            })
+        }
+
+        // On success
+        if (Booking.invoiceUrl) {
+            return res.download(Booking.invoiceUrl)
+        }
 
     } catch (error) {
         throw new Error(error);
@@ -746,6 +816,6 @@ export {
     verifyPayments,
     ORDER_CANCEL,
     SAVE_CART,
-    INIT_FOR_INVOICE,
+    DOWNLOAD_INVOICE,
     ATTACH_INVOICE_WITH_ORDER
 }

@@ -2,16 +2,6 @@ import { config } from "./src/config/_config.js";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 
-const uploadWithRetry = async (command, max = 3) => {
-    for (let i = 0; i < max; i++) {
-        try {
-            return await client.send(command);
-        } catch (err) {
-            console.warn(`Upload attempt ${i + 1} failed`);
-            if (i === max - 1) throw err;
-        }
-    }
-};
 
 const client = new LambdaClient({
     maxAttempts: 5,
@@ -26,6 +16,7 @@ const client = new LambdaClient({
         socketTimeout: 10000     // ms — wait for TLS handshake + response
     }),
 });
+
 
 
 const params = {

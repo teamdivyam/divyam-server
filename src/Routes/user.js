@@ -19,9 +19,9 @@ import {
 } from "../Users/userController.js";
 
 import {
+    DOWNLOAD_INVOICE,
     GET_ALL_ORDERS_BY_USER_ID,
     GET_SINGLE_ORDERS,
-    INIT_FOR_INVOICE,
     NEW_ORDER,
     ORDER_CANCEL,
     SAVE_CART,
@@ -88,7 +88,7 @@ Route.post('/check-pincode', PINCODE_VERIFY);
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', verifyPayments);
-Route.get('/user/ordered', INIT_FOR_INVOICE) // open new page where user ca download their invoice
+Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca download their invoice
 
 //call guest api when user visit for the first time 
 Route.post('/session/guest', isGuestUser, GUEST_USER);

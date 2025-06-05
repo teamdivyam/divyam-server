@@ -86,7 +86,6 @@ AdminRoute.post('/login', LIMIT_ADMIN_LOGIN, LoginAdmin);
 // ANALYTICS
 
 AdminRoute.get('/analytics', isAdmin, ADMIN_DASHBOARD_ANALYTICS);
-
 // Packages  
 AdminRoute.post('/package', isAdmin, Upload.single("image"), ADD_NEW_PACKAGE);
 AdminRoute.get('/package', isAdmin, GET_ALL_PACKAGE);

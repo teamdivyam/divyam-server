@@ -421,7 +421,6 @@ const SEARCH_ORDERS = async (req, res, next) => {
     }
 }
 
-
 const SEARCH_AGENTS = async (req, res, next) => {
     try {
         const { error, value } = SEARCH_AGENTS_VALIDATIONS_SCHEMA.validate(req.query);
@@ -472,7 +471,6 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
         return next(createHttpError(400, "Something went wrong"))
     }
 }
-
 
 const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
     try {
@@ -573,7 +571,6 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
         return next(createHttpError(400, "Something went wrong.."))
     }
 }
-
 
 // Only for internal Communication
 const GET_ORDER_DETAILS = async (req, res, next) => {

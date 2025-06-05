@@ -57,8 +57,6 @@ const ipLimiter = rateLimit({
     }
 });
 
-// app.use(ipLimiter);
-
 app.use('/api', ipLimiter, Route);
 app.use('/api/admin', AdminRoute);
 

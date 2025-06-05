@@ -14,24 +14,20 @@ const client = new LambdaClient({
     },
 });
 
-
-const invokeLambda = async () => {
+const invokeLambda = async (payload) => {
     const command = new InvokeCommand({
         FunctionName: 'OrderInvoice_deploy',
-        Payload: Buffer.from(JSON.stringify({
-            success: true
-        })),
+        InvocationType: "Event",
+        Payload: Buffer.from(JSON.stringify(payload))
     });
 
     try {
         const response = await client.send(command);
-        const payload = JSON.parse(Buffer.from(response.Payload));
-        console.log('Lambda response:', payload);
+        console.log(`Lambda Invoked... ${response}`);
     } catch (error) {
         console.error('Error invoking Lambda:', error);
     }
 }
-
 
 
 
@@ -97,7 +93,8 @@ const handleCapturedPayments = async (payment) => {
 
         // call lambda function
 
-
+        const lambdaPayload = { orderId: orderId }
+        await invokeLambda(lambdaPayload);
         // ON-SUCCESS
         await session.commitTransaction();
         console.log("✅- Success");
