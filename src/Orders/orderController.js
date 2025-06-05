@@ -324,9 +324,9 @@ const verifyPayments = async (req, res, next) => {
 
         // redirect to another location so he can download order Invoice
         const secret = config.SECRET;
-        const API_DOMAIN = "https://api.divaym.com"
+        const API_DOMAIN = "https://api.divyam.com"
         const encryptedOrderId = encryptStr(razorpay_order_id, secret);
-        const redirectPath = `${API_DOMAIN}/user/ordered?success=true&orderId=${encryptedOrderId}`;
+        const redirectPath = `${API_DOMAIN}/api/user/ordered?success=true&orderId=${encryptedOrderId}`;
 
         const resBody = {
             success: true,
@@ -396,7 +396,6 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             return next(createHttpError(400, "Please Try agian later."))
         }
 
-
         // fetch Invoice paths 
         const Order = await OrderModel.findOne(
             { orderId: originalOrderId }
@@ -415,7 +414,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         if (!Booking.invoiceUrl) {
             const payload = { orderId: originalOrderId };
             // invoke lambda function
-            await invokeLambda(payload)
+            await invokeLambda(payload);
 
             return res.status(200).json({
                 success: true,
