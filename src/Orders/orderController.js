@@ -354,6 +354,11 @@ const ATTACH_INVOICE_WITH_ORDER = async (req, res, next) => {
         }
 
         const booking = await bookingModel.findById({ _id: isValidOrder.booking });
+        if (!booking) {
+            return next(createHttpError(400, "Invalid Order id .."))
+        }
+
+        console.log(`invoiceUrl => ${invoiceUrl}`)
         booking.orderInvoice = invoiceUrl;
         await isValidOrder.save();
 
