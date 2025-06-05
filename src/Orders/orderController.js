@@ -342,7 +342,7 @@ const verifyPayments = async (req, res, next) => {
 }
 
 
-const ATTACH_INVOICE_WITH_ORDER = async (req, res, nexr) => {
+const ATTACH_INVOICE_WITH_ORDER = async (req, res, next) => {
     console.log("ATTACHED_INVOICE_WITH_ORDER", req.body);
     try {
         const { invoiceUrl, orderId } = req.body;
