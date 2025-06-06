@@ -7,7 +7,7 @@ const bookingSchema = new mongoose.Schema({
     transaction: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
-    orderInvoice: { type: String, default: "null" },
+    orderInvoice: { type: String, },
     status: {
         type: String,
         enums: [
