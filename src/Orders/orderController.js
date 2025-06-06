@@ -417,7 +417,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong | Internal error 2"))
         }
 
-        if (Booking.invoiceUrl !== "null") {
+        if (Booking.invoiceUrl == null) {
             const payload = { orderId: originalOrderId };
             await invokeLambda(payload); //invoke it 
 
