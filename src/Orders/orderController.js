@@ -427,9 +427,14 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             })
         }
 
+        return res.status(200).json({
+            succes: true,
+            invoiceUrl: Booking.orderInvoice ? Booking.orderInvoice : "Try again..."
+        })
+
         // On success
         //redirect to s3 path it will force to download invoice
-        return res.redirect(Booking.orderInvoice)
+        // res.redirect(Booking.orderInvoice)
     } catch (error) {
         throw new Error(error);
     }
