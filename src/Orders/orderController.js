@@ -324,7 +324,7 @@ const verifyPayments = async (req, res, next) => {
 
         // redirect to another location so he can download order Invoice
         const secret = config.SECRET;
-        const API_DOMAIN = "https://api.divyam.com"
+        const API_DOMAIN = config.BACKEND_URL;
         const encryptedOrderId = encryptStr(razorpay_order_id, secret);
         const redirectPath = `${API_DOMAIN}/api/user/ordered?success=true&orderId=${encryptedOrderId}`;
 
@@ -391,6 +391,8 @@ const cryptoDecrypto = (cipherText, secret) => {
 // doenload Invoice
 const DOWNLOAD_INVOICE = async (req, res, next) => {
     try {
+
+
         const { orderId } = req.query;
         if (!orderId) {
             return next(createHttpError(400, "Something went wrong."))
@@ -416,12 +418,12 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         if (!Booking) {
             return next(createHttpError(400, "Something went wrong | Internal error 2"))
         }
+        console.log("BOOKing information:", Booking)
 
-        if (!Booking.invoiceUrl) {
+        if (!Booking.invoiceUrl || Booking.invoiceUrl == null) {
             const payload = { orderId: originalOrderId };
             // invoke lambda function
             await invokeLambda(payload);
-
             return res.status(200).json({
                 success: true,
                 msg: "Please wait a minutes, we are building your inoice..."
@@ -429,9 +431,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         }
 
         // On success
-        if (Booking.invoiceUrl) {
-            return res.download(Booking.invoiceUrl)
-        }
+        return res.download(Booking.invoiceUrl)
 
     } catch (error) {
         throw new Error(error);
@@ -631,7 +631,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
         .populate({
             path: "transaction",
             select: "amount status gateway paymentMethod -_id"
-        }).limit(limit).skip(skip).lean()
+        }).limit(limit).skip(skip).lean().sort(1);
 
     if (!orders) {
         return next(createHttpError(401, "No Orders.."))

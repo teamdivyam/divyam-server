@@ -3,6 +3,8 @@ config()
 
 const _config = {
     FRONTEND_URL: process.env.FRONT_END_URL,
+    BACKEND_URL: process.env.NODE_ENV === "development"
+        ? `http://localhost:${process.env.APP_PORT}` : `https://api.divyam.com`,
     ADMIN_DASHBOARD_URL: process.env.ADMIN_DASHBORAD_URL,
     PRODUCTION: process.env.PRODUCTION,
     APP_PORT: process.env.APP_PORT,
