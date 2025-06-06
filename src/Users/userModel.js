@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 const orderAddress = new mongoose.Schema({
     area: { type: String, },
     landMark: { type: String, },

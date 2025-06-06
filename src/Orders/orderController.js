@@ -92,12 +92,10 @@ const NEW_ORDER = async (req, res, next) => {
         // chech-for-availibilty
         const isOrderAvailableInYourPinCode = await AreaZoneModel.findOne(
             {
-                areaPinCode: isUserAvailable.areaPin,
+                areaPinCode: orderDeliveryAddress[0].pinCode,
                 isAvailable: true
             }
         );
-
-        // console.log("LOG_2");
 
         if (!isOrderAvailableInYourPinCode) {
             return next(createHttpError(400, "Our Services are not avaialable in your area"))
@@ -191,7 +189,7 @@ const NEW_ORDER = async (req, res, next) => {
                     landMark: orderDeliveryAddress[0].landMark,
                     city: orderDeliveryAddress[0].city,
                     state: orderDeliveryAddress[0].state,
-                    contactNumber: isUserAvailable[0].mobileNum,
+                    contactNumber: isUserAvailable.mobileNum,
                     pinCode: orderDeliveryAddress[0].pinCode,
                     area: orderDeliveryAddress[0].area,
                 }
@@ -208,8 +206,6 @@ const NEW_ORDER = async (req, res, next) => {
         createOrder.booking = NEW_BOOKING[0]._id;
         await createOrder.save({ session });
 
-
-
         // CREATE_TRANSACTION
         const TRANSACTION = await TransactionModel.create(
             [
@@ -223,7 +219,6 @@ const NEW_ORDER = async (req, res, next) => {
             ],
             { session: session }
         );
-
 
         if (!TRANSACTION) {
             await sessabortTransaction()

@@ -14,7 +14,7 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
         moment().add(0, 'day').toDate()
     ).required(),
     endDate: Joi.date().iso().min(Joi.ref("startDate")).required(),
-    referralCode: Joi.string().required()
+    referralCode: Joi.string()
 });
 
 const PAGINATION_SCHEMA_VALIDATOR = Joi.object({
