@@ -43,10 +43,6 @@ const encryptStr = (string, secret) => {
 }
 
 
-
-// ----
-
-
 // Create Orders
 const NEW_ORDER = async (req, res, next) => {
     const session = await mongoose.startSession();
@@ -83,7 +79,15 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Please complete your profile"))
         }
 
-        //CHECK_COPON_CODE
+        if (!isUserAvailable?.orderAddress) {
+            return next(createHttpError(400, "There is no address available for this order please add to procees"))
+        }
+
+        const orderDeliveryAddress = isUserAvailable?.orderAddress.filter((item, idx) => {
+            if (item.isActive) {
+                return item;
+            }
+        });
 
         // chech-for-availibilty
         const isOrderAvailableInYourPinCode = await AreaZoneModel.findOne(
@@ -134,9 +138,6 @@ const NEW_ORDER = async (req, res, next) => {
                 }
             )
         }
-
-        // console.log("LOG_5");
-
         // calc price included referral code
         const totalAmount = Package.price * productQuantity;
         // console.log("LOG_5.1");
@@ -185,7 +186,15 @@ const NEW_ORDER = async (req, res, next) => {
                 endDate: endBookingDate,
                 resourceId: packageID,
                 customerId: USER_ID,
-                orderId: createOrder._id
+                orderId: createOrder._id,
+                address: {
+                    landMark: orderDeliveryAddress.landMark,
+                    city: orderDeliveryAddress.city,
+                    state: orderDeliveryAddress.state,
+                    contactNumber: isUserAvailable.mobileNum,
+                    pinCode: orderDeliveryAddress.pinCode,
+                    area: orderDeliveryAddress.area,
+                }
             }],
             { session }
         );
@@ -421,9 +430,9 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             await invokeLambda(payload);
             console.log("Lambda invoked for invoice generation");
 
-            return res.status(202).json({  // 202 Accepted status might be more appropriate
+            return res.status(202).json({
                 success: true,
-                message: "Your invoice is being generated. Please check back shortly."
+                message: "Your invoice is generated... Please check back shortly."
             });
         }
 

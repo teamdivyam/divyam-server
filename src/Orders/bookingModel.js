@@ -1,5 +1,17 @@
 import mongoose from "mongoose";
 
+
+const bookingAddresSchema = new mongoose.Schema({
+    area: { type: String, },
+    landMark: { type: String, },
+    city: { type: String },
+    state: { type: String },
+    contactNumber: { type: Number },
+    pinCode: { type: String },
+    area: { type: String },
+    isActive: { type: Boolean, default: false }
+});
+
 const bookingSchema = new mongoose.Schema({
     resourceId: { type: mongoose.Schema.Types.ObjectId, ref: "Package", required: true },  //packageId
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },   //customerId
@@ -8,6 +20,7 @@ const bookingSchema = new mongoose.Schema({
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     orderInvoice: { type: String, },
+    address: { type: bookingAddresSchema, },
     status: {
         type: String,
         enums: [

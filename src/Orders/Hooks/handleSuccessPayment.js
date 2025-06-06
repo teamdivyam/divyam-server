@@ -5,6 +5,7 @@ import TransactionModel from "../transactionModel.js";
 import logger from "../../logger/index.js";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { config } from "../../config/_config.js";
+import bookingModel from "../bookingModel.js";
 
 const client = new LambdaClient({
     region: config.AWS_REGION,
@@ -91,12 +92,23 @@ const handleCapturedPayments = async (payment) => {
             await user.save();
         }
 
+        // Update Booking status
+        const booking = await bookingModel.findOne({ orderId: Order._id });
+
+        if (!booking) {
+            throw new Error("Internal error..")
+        }
+
+        booking.status = "Confirmed";
+        await booking.save()
+
         const lambdaPayload = { orderId: orderId };
         await invokeLambda(lambdaPayload);
         console.log("lambda invoked..");
+
         // ON-SUCCESS
         await session.commitTransaction();
-        console.log("✅- Success");
+        console.log("Webhook completed their work..");
         return true
     } catch (error) {
         session.abortTransaction()
