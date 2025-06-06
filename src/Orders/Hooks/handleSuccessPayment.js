@@ -90,9 +90,10 @@ const handleCapturedPayments = async (payment) => {
             user.orders.push(Order._id);
             await user.save();
         }
-        // call lambda function
+
         const lambdaPayload = { orderId: orderId };
         await invokeLambda(lambdaPayload);
+        console.log("lambda invoked..");
         // ON-SUCCESS
         await session.commitTransaction();
         console.log("✅- Success");

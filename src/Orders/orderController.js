@@ -417,10 +417,11 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong | Internal error 2"))
         }
 
-        if (Booking.orderInvoice == null) {
+        if (Booking.orderInvoice === null) {
             const payload = { orderId: originalOrderId };
-            await invokeLambda(payload); //invoke it 
 
+            await invokeLambda(payload); //invoke it 
+            console.log("lambda Invoked...");
             return res.status(200).json({
                 success: true,
                 msg: "Please wait a minutes, we are building your inoice..."
@@ -429,7 +430,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
 
         return res.status(200).json({
             succes: true,
-            invoiceUrl: Booking.orderInvoice ? Booking.orderInvoice : "Try again..."
+            invoiceUrl: Booking.orderInvoice !== null ? Booking.orderInvoice : "try agian.."
         })
 
         // On success
