@@ -416,12 +416,11 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         if (!Booking) {
             return next(createHttpError(400, "Something went wrong | Internal error 2"))
         }
-        console.log("BOOKing information:", Booking)
 
-        if (!Booking.invoiceUrl || Booking.invoiceUrl == null) {
+        if (Booking.invoiceUrl !== "null") {
             const payload = { orderId: originalOrderId };
-            // invoke lambda function
-            await invokeLambda(payload);
+            await invokeLambda(payload); //invoke it 
+
             return res.status(200).json({
                 success: true,
                 msg: "Please wait a minutes, we are building your inoice..."
@@ -429,10 +428,8 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         }
 
         // On success
-        //redirect to s3 path it will force to download invoice inside browser
-        return res.redirect(Booking.invoiceUrl);
-
-
+        //redirect to s3 path it will force to download invoice
+        return res.redirect(Booking.orderInvoice)
     } catch (error) {
         throw new Error(error);
     }
