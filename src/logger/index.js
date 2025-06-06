@@ -1,12 +1,14 @@
 import devLogger from "./devLogger.js";
 import uatLogger from "./uatLogger.js";
-import productionLogger from "./productionLogger.js";
 import { config } from "../config/_config.js";
+import productionLogger from './productionLogger.js';
+
+
 let logger = null;
 
 switch (config.NODE_ENV) {
     case "production": {
-        logger = productionLogger()
+        logger = productionLogger();
         break;
     }
 
