@@ -75,9 +75,9 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Invalid Request"))
         }
 
-        if (!isUserAvailable.isVerified) {
-            return next(createHttpError(400, "Please complete your profile"))
-        }
+        // if (!isUserAvailable.isVerified) {
+        //     return next(createHttpError(400, "Please complete your profile"))
+        // }
 
         if (!isUserAvailable?.orderAddress) {
             return next(createHttpError(400, "There is no address available for this order please add to procees"))
