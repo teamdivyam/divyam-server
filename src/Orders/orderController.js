@@ -393,54 +393,50 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
     try {
         const { orderId } = req.query;
         if (!orderId) {
-            return next(createHttpError(400, "Something went wrong."))
+            return next(createHttpError(400, "Order ID is required"));
         }
+
         const secret = config.SECRET;
         const originalOrderId = cryptoDecrypto(orderId, secret);
 
         if (!originalOrderId) {
-            return next(createHttpError(400, "Please Try agian later."))
+            return next(createHttpError(400, "Invalid order ID"));
         }
 
-        // fetch Invoice paths 
-        const Order = await OrderModel.findOne(
-            { orderId: originalOrderId }
-        );
-
+        // Fetch Order
+        const Order = await OrderModel.findOne({ orderId: originalOrderId });
         if (!Order) {
-            return next(createHttpError(400, "Oops something went wrong  | Internal error 1"))
+            return next(createHttpError(404, "Order not found"));
         }
 
-        // fetch invoice url for download
+        // Fetch Booking
         const Booking = await bookingModel.findOne({ orderId: Order._id });
         if (!Booking) {
-            return next(createHttpError(400, "Something went wrong | Internal error 2"))
+            return next(createHttpError(404, "Booking not found"));
         }
 
-        if (Booking.orderInvoice === null) {
+        // Handle case where invoice isn't generated yet
+        if (!Booking.orderInvoice) {
             const payload = { orderId: originalOrderId };
+            await invokeLambda(payload);
+            console.log("Lambda invoked for invoice generation");
 
-            await invokeLambda(payload); //invoke it 
-            console.log("lambda Invoked...");
-            return res.status(200).json({
+            return res.status(202).json({  // 202 Accepted status might be more appropriate
                 success: true,
-                msg: "Please wait a minutes, we are building your inoice..."
-            })
+                message: "Your invoice is being generated. Please check back shortly."
+            });
         }
 
         return res.status(200).json({
-            succes: true,
-            invoiceUrl: Booking.orderInvoice !== null ? Booking.orderInvoice : "try agian.."
-        })
+            success: true,
+            invoiceUrl: Booking.orderInvoice
+        });
 
-        // On success
-        //redirect to s3 path it will force to download invoice
-        // res.redirect(Booking.orderInvoice)
     } catch (error) {
-        throw new Error(error);
+        console.error("Invoice download error:", error);
+        next(error);  // Pass to Express error handler
     }
-}
-
+};
 
 
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
