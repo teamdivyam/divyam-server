@@ -9,7 +9,6 @@ const bookingAddresSchema = new mongoose.Schema({
     contactNumber: { type: Number },
     pinCode: { type: String },
     area: { type: String },
-    isActive: { type: Boolean, default: false }
 });
 
 const bookingSchema = new mongoose.Schema({

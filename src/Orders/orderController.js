@@ -188,12 +188,12 @@ const NEW_ORDER = async (req, res, next) => {
                 customerId: USER_ID,
                 orderId: createOrder._id,
                 address: {
-                    landMark: orderDeliveryAddress.landMark,
-                    city: orderDeliveryAddress.city,
-                    state: orderDeliveryAddress.state,
-                    contactNumber: isUserAvailable.mobileNum,
-                    pinCode: orderDeliveryAddress.pinCode,
-                    area: orderDeliveryAddress.area,
+                    landMark: orderDeliveryAddress[0].landMark,
+                    city: orderDeliveryAddress[0].city,
+                    state: orderDeliveryAddress[0].state,
+                    contactNumber: isUserAvailable[0].mobileNum,
+                    pinCode: orderDeliveryAddress[0].pinCode,
+                    area: orderDeliveryAddress[0].area,
                 }
             }],
             { session }
