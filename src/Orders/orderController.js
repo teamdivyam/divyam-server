@@ -631,7 +631,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
         .populate({
             path: "transaction",
             select: "amount status gateway paymentMethod -_id"
-        }).lean()
+        }).limit(limit).skip(skip).lean()
 
     if (!orders) {
         return next(createHttpError(401, "No Orders.."))
