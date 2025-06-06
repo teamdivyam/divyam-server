@@ -391,8 +391,6 @@ const cryptoDecrypto = (cipherText, secret) => {
 // doenload Invoice
 const DOWNLOAD_INVOICE = async (req, res, next) => {
     try {
-
-
         const { orderId } = req.query;
         if (!orderId) {
             return next(createHttpError(400, "Something went wrong."))
@@ -431,7 +429,9 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
         }
 
         // On success
-        return res.download(Booking.invoiceUrl)
+        //redirect to s3 path it will force to download invoice inside browser
+        return res.redirect(Booking.invoiceUrl);
+
 
     } catch (error) {
         throw new Error(error);
