@@ -83,6 +83,10 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "There is no address available for this order please add to procees"))
         }
 
+        if (!isUserAvailable?.orderAddress) {
+            return next(createHttpError(400, "Delivery address are required field"))
+        }
+
         const orderDeliveryAddress = isUserAvailable?.orderAddress.filter((item, idx) => {
             if (item.isActive) {
                 return item;
@@ -115,7 +119,6 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Package not found"));
         }
 
-        // console.log("LOG_3");
 
         //  check Booking available or not 
         const isBookingAvailable = await bookingModel.findOne(
@@ -127,7 +130,6 @@ const NEW_ORDER = async (req, res, next) => {
         ).lean();
 
         // console.log("LOG4");
-
         if (isBookingAvailable) {
             return res.status(404).json(
                 {
@@ -146,8 +148,6 @@ const NEW_ORDER = async (req, res, next) => {
         });
 
         // console.log("LOG_5.2");
-
-
         if (!razorpayOrder) {
             await session.abortTransaction();
             return next(createHttpError(500, "Payment gateway error"));
@@ -323,10 +323,12 @@ const verifyPayments = async (req, res, next) => {
 
         // call Referral API
         const totalAmount = rzrVerifyPayments.amount_paid / 100;
+        const userComission = (totalAmount * 5) / 100;
 
+        // Todo: - set comission amount
         await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
 
-        // redirect to another location so he can download order Invoice
+        // redirect user location so he can download order Invoice
         const secret = config.SECRET;
         const API_DOMAIN = config.BACKEND_URL;
         const encryptedOrderId = encryptStr(razorpay_order_id, secret);

@@ -83,12 +83,7 @@ app.use(function (req, res, next) {
 
 // global Error handler middleware
 app.use(globalErrorHandler);
-
 export default app
-
-
-
-
 
 
 
