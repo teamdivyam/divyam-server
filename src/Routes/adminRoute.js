@@ -26,6 +26,7 @@ import {
 import {
     ATTACH_INVOICE_WITH_ORDER,
     CHANGE_ORDER_STATUS,
+    GET_ALL_BOOKINGS,
     GET_ALL_ORDERS,
     GET_ALL_ORDERS_BY_USER_ID,
     GET_FILTERED_ORDER,
@@ -94,6 +95,7 @@ AdminRoute.patch('/package/:PERMALINK', isAdmin, UPDATE_PACKAGE);
 AdminRoute.delete('/package/:PKG_ID', isAdmin, DELETE_SINGLE_PACKAGE);
 
 // Orders  (ALl THE ROUTES Manage by ADMIN..)
+AdminRoute.get('/order/success', GET_ALL_BOOKINGS) // get all the success order and its bookings info
 AdminRoute.get('/order/', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/:ORDER_ID', isAdmin, VIEW_SINGLE_ORDER_ADMIN);
 AdminRoute.get('/order-filter', isAdmin, GET_FILTERED_ORDER);
@@ -102,7 +104,6 @@ AdminRoute.post('/order-details', GET_ORDER_DETAILS); // For Internal comunicati
 AdminRoute.post('/attach-invoice', ATTACH_INVOICE_WITH_ORDER)
 
 // USER-INFO-MANAGED_BY_ADMIN
-
 AdminRoute.get('/users/', isAdmin, GET_ALL_USERS);
 AdminRoute.get('/user/:USER_ID', isAdmin, GET_SINGLE_USERS);
 AdminRoute.delete('/user/:USER_ID', isAdmin, DELETE_SINGLE_USERS);

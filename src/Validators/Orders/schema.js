@@ -38,6 +38,15 @@ const UPDATE_ORDER_STATUS_VALIDATION_SCHEMA = Joi.object({
         .required()
 })
 
+const VALIDATE_PAGINATION_QUERY = Joi.object(
+    {
+        page: Joi.string().min(1).required(),
+        limit: Joi.string()
+    }
+)
+
+
+
 const ALL_ORDER_SCHEMA_VALIDATION = Joi.object({
     page: Joi.string().min(1).required(),
     limit: Joi.string(),
@@ -76,5 +85,7 @@ export {
     UPDATE_ORDER_STATUS_VALIDATION_SCHEMA,
     ALL_ORDER_SCHEMA_VALIDATION,
     GET_FILTERED_ORDER_VALIDATION_SCHEMA,
-    IS_ORDER_ID
+    IS_ORDER_ID,
+    VALIDATE_PAGINATION_QUERY
+
 }

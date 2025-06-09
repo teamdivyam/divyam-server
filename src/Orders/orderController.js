@@ -1,6 +1,6 @@
 import { config } from "../config/_config.js";
 import createHttpError from "http-errors";
-import crypto from "crypto"
+import crypto, { createVerify } from "crypto"
 import PackageModel from "../Package/PackageModel.js";
 import userModel from '../Users/userModel.js';
 import Razorpay from "razorpay";
@@ -12,7 +12,6 @@ import AreaZoneModel from "../AreaZone/areaZoneModel.js";
 import moment from "moment";
 import cartTrackingModel from "./cartTrackingModel.js";
 import bookingModel from "./bookingModel.js";
-import bcrypt from "bcryptjs";
 import CryptoJS from "crypto-js";
 
 
@@ -23,7 +22,8 @@ import {
     UPDATE_ORDER_STATUS_VALIDATION_SCHEMA,
     ALL_ORDER_SCHEMA_VALIDATION,
     GET_FILTERED_ORDER_VALIDATION_SCHEMA,
-    IS_ORDER_ID
+    IS_ORDER_ID,
+    VALIDATE_PAGINATION_QUERY
 } from "../Validators/Orders/schema.js"
 
 import TransactionModel from "./transactionModel.js";
@@ -121,23 +121,23 @@ const NEW_ORDER = async (req, res, next) => {
 
 
         //  check Booking available or not 
-        const isBookingAvailable = await bookingModel.findOne(
-            {
-                startDate: startBookingDate,
-                endDate: endBookingDate,
-                status: "Confirmed"
-            }
-        ).lean();
+        // const isBookingAvailable = await bookingModel.findOne(
+        //     {
+        //         startDate: startBookingDate,
+        //         endDate: endBookingDate,
+        //         status: "Confirmed"
+        //     }
+        // ).lean();
 
         // console.log("LOG4");
-        if (isBookingAvailable) {
-            return res.status(404).json(
-                {
-                    success: false,
-                    msg: "Already booked! Try selecting a different date from the calendar"
-                }
-            )
-        }
+        // if (isBookingAvailable) {
+        //     return res.status(404).json(
+        //         {
+        //             success: false,
+        //             msg: "Already booked! Try selecting a different date from the calendar"
+        //         }
+        //     )
+        // }
         // calc price included referral code
         const totalAmount = Package.price * productQuantity;
         // console.log("LOG_5.1");
@@ -426,7 +426,6 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             const payload = { orderId: originalOrderId };
             await invokeLambda(payload);
             console.log("Lambda invoked for invoice generation");
-
             return res.status(202).json({
                 success: true,
                 message: "Your invoice is generated... Please check back shortly."
@@ -646,6 +645,36 @@ const GET_ALL_ORDERS = async (req, res, next) => {
 }
 
 
+const GET_ALL_BOOKINGS = async (req, res, next) => {
+    try {
+        const { error, value } = VALIDATE_PAGINATION_QUERY.validate(req.query);
+
+        if (error) {
+            return next(createHttpError(400, error?.details[0].message))
+        }
+
+        const Page = value.page;
+        const Limit = value.limit;
+        const skip = (Page - 1) * Limit;
+
+        const bookings = await bookingModel.find().skip(skip).limit(Limit).lean();
+        if (!bookings) {
+            return next(createHttpError(400, "Something went wrong | internal error"))
+        }
+
+        return res.status(200).json(
+            {
+                totalLength: bookings.length,
+                success: true,
+                bookings: bookings
+            }
+        )
+    } catch (error) {
+
+        return next(createHttpError(400, "Something went wrong.."))
+    }
+}
+
 const GET_FILTERED_ORDER = async (req, res, next) => {
     try {
         const { error, value } = GET_FILTERED_ORDER_VALIDATION_SCHEMA.validate(req.query);
@@ -824,5 +853,6 @@ export {
     ORDER_CANCEL,
     SAVE_CART,
     DOWNLOAD_INVOICE,
-    ATTACH_INVOICE_WITH_ORDER
+    ATTACH_INVOICE_WITH_ORDER,
+    GET_ALL_BOOKINGS
 }
