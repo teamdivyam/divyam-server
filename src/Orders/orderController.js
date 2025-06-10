@@ -6,7 +6,6 @@ import userModel from '../Users/userModel.js';
 import Razorpay from "razorpay";
 import mongoose from "mongoose";
 import OrderModel from "./orderModel.js";
-const isObjectId = /^[0-9a-fA-F]{24}$/;
 import generateOrderID from "../Counter/counterController.js";
 import AreaZoneModel from "../AreaZone/areaZoneModel.js";
 import moment from "moment";
@@ -125,7 +124,6 @@ const NEW_ORDER = async (req, res, next) => {
         //     }
         // ).lean();
 
-        // console.log("LOG4");
         // if (isBookingAvailable) {
         //     return res.status(404).json(
         //         {
@@ -235,7 +233,7 @@ const NEW_ORDER = async (req, res, next) => {
             `Failed to prepare Order: ${error.message}, Error stack: ${error.stack}`
         );
         await session.abortTransaction();
-        return next(createHttpError(500, error));
+        return next(createHttpError(500, error.message));
     } finally {
         session.endSession();
     }
@@ -414,19 +412,21 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
             return next(createHttpError(404, "Booking not found"));
         }
 
-        // Handle case where invoice isn't generated yet
+
         if (!Booking.orderInvoice) {
             const payload = { orderId: originalOrderId };
             await invokeLambda(payload);
             console.log("Lambda invoked for invoice generation");
             return res.status(202).json({
                 success: true,
+                statusCode: 202,
                 message: "Your invoice is generated... Please check back shortly."
             });
         }
 
         return res.status(200).json({
             success: true,
+            statusCode: 200,
             invoiceUrl: Booking.orderInvoice
         });
 

@@ -544,7 +544,7 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
                 {
                     path: "customer",
                     model: "User",
-                    select: { mobileNum: 1, dob: 1, email: 1, gender: 1, _id: 0, avatar: 1 }
+                    select: { mobileNum: 1, dob: 1, email: 1, gender: 1, _id: 0, avatar: 1, fullName: 1 }
                 }
             )
             .populate({
@@ -582,6 +582,7 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
 // Only for internal Communication
 const GET_ORDER_DETAILS = async (req, res, next) => {
     try {
+        // return res.status(200).json({})
 
         const { orderId } = req.body;
         const Order = await orderModel.findOne({ orderId }, { __v: 0, notes: 0 }).populate({
@@ -595,7 +596,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
             .populate({
                 path: "customer",
                 model: "User",
-                select: { _id: 0, __v: 0, otp: 0, accessToken: 0, }
+                select: { _id: 0, __v: 0, otp: 0, accessToken: 0, orders: 0 }
             })
             .populate({
                 path: "transaction",
