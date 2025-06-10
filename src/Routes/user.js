@@ -92,7 +92,6 @@ Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca down
 //call guest api when user visit for the first time 
 Route.post('/session/guest', isGuestUser, GUEST_USER);
 Route.post('/user/save-cart', isGuestUser, SAVE_CART);
-
 // ------LOGIN_END_POINT
 // Route.post('/auth',)
 

@@ -640,6 +640,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
             path: "booking",
             select: { status: 1 }
         })
+        .populate({ path: "transaction", select: "paymentMethod" })
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip)

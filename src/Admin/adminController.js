@@ -23,6 +23,7 @@ import getPreSignedURL from "../services/getPreSignedUrl.js";
 import Order from "../Orders/orderModel.js";
 import moment from "moment";
 import logger from "../logger/index.js";
+import { populate } from "dotenv";
 
 const RegisterAdmin = async (req, res, next) => {
 
@@ -178,7 +179,7 @@ const GET_ALL_USERS = async (req, res, next) => {
             return next(createHttpError(401, "Invalid request.."))
         }
 
-        const users = await userModel.find({}, { updatedAt: 0, __v: 0, accessToken: 0, createdAt: 0, id: 0 }).limit(limit).skip(skip).lean();
+        const users = await userModel.find({}, { updatedAt: 0, __v: 0, accessToken: 0, createdAt: 0, id: 0 }).limit(limit).skip(skip).sort({ createdAt: -1 }).lean();
 
         // map over array and insert prefix of cloudFront URL
 
@@ -505,70 +506,76 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
     try {
         const { ORDER_ID } = req.params;
 
-        const order = await orderModel.findById(ORDER_ID, { _id: 0, updatedAt: 0, __v: 0 })
+        const order = await orderModel.findById(ORDER_ID, { _id: 0, updatedAt: 0, __v: 0, notes: 0 })
+            .populate({
+                path: "product",
+                populate: {
+                    path: "productId",
+                    model: "Package",
+                    select: {
+                        createdAt: 0,
+                        _id: 0, __v: 0,
+                        notes: 0,
+                        rating: 0,
+                        discription: 0,
+                        isVisible: 0,
+                        productBannerImgs: 0,
+                        isFeatured: 0,
+                        updatedAt: 0,
+                        packageListTextItems: 0,
+                        policy: 0
+                    },
+                    populate: {
+                        path: "productImg",
+                        model: "productsimg",
+                        select: { imgSrc: 1, imagePath: 1, id: 1 }
+                    }
+                }
+            })
+
+
             .populate(
                 {
-                    path: "product",
-                    populate: {
-                        path: "productId",
-                        model: "Package",
-                        select: {
-                            name: 1,
-                            slug: 1,
-                            description: 1,
-                            capacity: 1,
-                            price: 1,
-                            productImg: 1
-                        },
-                        populate: {
-                            path: "productImg",
-                            model: "productsimg",
-                            select: {
-                                imagePath: 1,
-                                _id: 0
-                            }
-                        }
-                    }
+                    path: "booking",
+                    select: { _id: 0, resourceId: 0, customerId: 0, orderId: 0, updatedAt: 0, __v: 0, createdAt: 0 }
                 }
             )
             .populate(
                 {
                     path: "customer",
                     model: "User",
-                    select: {
-                        fullName: 1, gender: 1, email: 1, dob: 1, avatar: 1, address: 1, _id: 0
-                    }
+                    select: { mobileNum: 1, dob: 1, email: 1, gender: 1, _id: 0, avatar: 1 }
                 }
             )
             .populate({
-                path: "booking",
-                select: "-_id -resourceId -customerId -__v -orderId -updatedAt"
-            })
-            .populate(
-                {
-                    path: "transaction",
-                    select: "-_id -user -order -__v"
-                }
-            )
-            .exec()
+                path: "transaction",
+                select: { _id: 0, user: 0, order: 0, __v: 0, _id: 0 }
+            }).lean();
 
 
         if (!order) {
             return next(createHttpError(400, "Something went wrong."))
         }
 
+        const orderDate = moment(order.createdAt).utc().format("DD-MM-YYYY:HH:MM");
+        const formatDob = moment(order?.customer.dob).format("DD-MM-YYYY");
+
+        let formattedOrders = { ...order, createdAt: orderDate, };
+
+        formattedOrders.customer.dob = formatDob
+
         // response 
         return res.status(200)
             .json(
                 {
                     success: true,
-                    order
+                    Order: formattedOrders
                 }
-            )
+            );
 
     } catch (error) {
         console.log(error)
-        return next(createHttpError(400, "Something went wrong.."))
+        return next(createHttpError(400, "Internal error"))
     }
 }
 
