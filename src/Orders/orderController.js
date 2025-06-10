@@ -75,10 +75,6 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Invalid Request"))
         }
 
-        // if (!isUserAvailable.isVerified) {
-        //     return next(createHttpError(400, "Please complete your profile"))
-        // }
-
         if (!isUserAvailable?.orderAddress) {
             return next(createHttpError(400, "There is no address available for this order please add to procees"))
         }
@@ -225,10 +221,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "Please Try again later-Internal Error"))
         }
 
-
-
         await session.commitTransaction();
-
         return res.status(201).json({
             status: 201,
             message: "Order created successfully",
@@ -612,6 +605,12 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
 
 // /items?page=${page}&limit=${limit}
 
+/**
+ * TODO:
+ *      Implement it on Admin Ui
+ *      Fix null responses
+ */
+
 
 const GET_ALL_ORDERS = async (req, res, next) => {
     const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
@@ -630,20 +629,77 @@ const GET_ALL_ORDERS = async (req, res, next) => {
         return next(createHttpError(401, "Invalid request.."))
     }
 
-    // const orders = await OrderModel.find().select("-updatedAt  -__v").limit(limit).skip(skip);
-    const orders = await OrderModel.find().select("-updatedAt -__v -notes")
+    const orders = await OrderModel.find(
+        {
+            orderStatus: "Pending",
+            booking: { $ne: null }
+        }
+    )
+        .select({ __v: 0, notes: 0, updatedAt: 0 })
         .populate({
-            path: "transaction",
-            select: "amount status gateway paymentMethod -_id"
-        }).limit(limit).skip(skip).lean().sort(1);
+            path: "booking",
+            select: { status: 1 }
+        })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip)
+        .lean();
+
+    const filteredOrder = orders && orders.map((order) => {
+        const formattedCreatedDate = moment(order.createdAt).utc().format("DD-MM-YYYY:HH:mm:ss");
+        // pending and confirmed
+        const isFreshOrder = order?.orderStatus === "Pending" && order?.booking?.status == "Confirmed";
+
+        return { ...order, createdAt: formattedCreatedDate, isFreshOrder }
+
+    });
+
 
     if (!orders) {
-        return next(createHttpError(401, "No Orders.."))
+        return next(createHttpError(401, "Oops something went wrong."))
     }
 
-    res.json(orders)
+    return res.status(200)
+        .json(
+            {
+                success: true,
+                orders: filteredOrder
+            }
+        )
+
 }
 
+
+const GET_BOOKINGS = async (req, res, next) => {
+    try {
+        const BOOKING_ID = req.params.BOOKING_ID;
+        const bookings = await bookingModel.findById(BOOKING_ID)
+            .populate({
+                path: "resourceId",
+            })
+            .populate({
+                select: "customerId"
+            })
+            .populate({
+                select: "orderId"
+            }).lean();
+
+        if (!bookings) {
+            return next(createHttpError(400, "Internal error "))
+        }
+
+        return res.status(200).
+            json(
+                {
+                    success: true,
+                    bookings
+                }
+            )
+
+    } catch (error) {
+
+    }
+}
 
 const GET_ALL_BOOKINGS = async (req, res, next) => {
     try {
@@ -657,7 +713,18 @@ const GET_ALL_BOOKINGS = async (req, res, next) => {
         const Limit = value.limit;
         const skip = (Page - 1) * Limit;
 
-        const bookings = await bookingModel.find().skip(skip).limit(Limit).lean();
+        const bookings = await bookingModel.find().skip(skip).limit(Limit)
+            .populate({
+                path: "resourceId",
+            })
+            .populate({
+                select: "customerId"
+            })
+            .populate({
+                select: "orderId"
+            });
+
+
         if (!bookings) {
             return next(createHttpError(400, "Something went wrong | internal error"))
         }
@@ -798,7 +865,6 @@ const ORDER_CANCEL = async (req, res, next) => {
     }
 }
 
-
 const SAVE_CART = async (req, res, next) => {
     try {
         console.log(req);
@@ -854,5 +920,6 @@ export {
     SAVE_CART,
     DOWNLOAD_INVOICE,
     ATTACH_INVOICE_WITH_ORDER,
-    GET_ALL_BOOKINGS
+    GET_ALL_BOOKINGS,
+    GET_BOOKINGS
 }

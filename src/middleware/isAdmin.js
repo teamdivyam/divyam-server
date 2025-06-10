@@ -54,7 +54,7 @@ const isAdmin = async (req, res, next) => {
         req.user = decodedToken.id;
         next()
     } catch (error) {
-        return next(createHttpError(401, error.message))
+        return next(createHttpError(401, "Unauthorized"))
     }
 }
 

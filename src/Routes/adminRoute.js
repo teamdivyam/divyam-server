@@ -29,6 +29,7 @@ import {
     GET_ALL_BOOKINGS,
     GET_ALL_ORDERS,
     GET_ALL_ORDERS_BY_USER_ID,
+    GET_BOOKINGS,
     GET_FILTERED_ORDER,
     GET_SINGLE_ORDERS
 } from "../Orders/orderController.js";
@@ -83,9 +84,7 @@ AdminRoute.post('/register', Upload.single('avatar'), RegisterAdmin);
 AdminRoute.post('/login', LIMIT_ADMIN_LOGIN, LoginAdmin);
 
 // AUTH ADMIN THEN PROCEED FOR THE NEXT TASK..
-
 // ANALYTICS
-
 AdminRoute.get('/analytics', isAdmin, ADMIN_DASHBOARD_ANALYTICS);
 // Packages  
 AdminRoute.post('/package', isAdmin, Upload.single("image"), ADD_NEW_PACKAGE);
@@ -95,6 +94,7 @@ AdminRoute.patch('/package/:PERMALINK', isAdmin, UPDATE_PACKAGE);
 AdminRoute.delete('/package/:PKG_ID', isAdmin, DELETE_SINGLE_PACKAGE);
 
 // Orders  (ALl THE ROUTES Manage by ADMIN..)
+AdminRoute.get('/order/booking/:BOOKING_ID', isAdmin, GET_BOOKINGS);
 AdminRoute.get('/order/success', GET_ALL_BOOKINGS) // get all the success order and its bookings info
 AdminRoute.get('/order/', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/:ORDER_ID', isAdmin, VIEW_SINGLE_ORDER_ADMIN);
@@ -109,7 +109,6 @@ AdminRoute.get('/user/:USER_ID', isAdmin, GET_SINGLE_USERS);
 AdminRoute.delete('/user/:USER_ID', isAdmin, DELETE_SINGLE_USERS);
 AdminRoute.get('/profile', isAdmin, VIEW_ADMIN_PROFILE);
 AdminRoute.post('/change-password', isAdmin, CHANGE_ADMIN_PASSWORD);
-
 // get-order-details-by-user
 
 // SEARCH USERS

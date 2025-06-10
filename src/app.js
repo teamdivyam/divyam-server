@@ -30,6 +30,7 @@ const allowedOrigins = [
     config.ORGIN3,
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:5175',
     'http://localhost:3000',
 ];
 
@@ -61,7 +62,6 @@ const ipLimiter = rateLimit({
 
 app.use('/api', ipLimiter, Route);
 app.use('/api/admin', AdminRoute);
-
 
 // Razorpay-webhook 
 app.post('/api/v1/razorpay-webhook', NEW_ORDER_WEB_HOOK);
