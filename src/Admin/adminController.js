@@ -582,8 +582,7 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
 // Only for internal Communication
 const GET_ORDER_DETAILS = async (req, res, next) => {
     try {
-        // return res.status(200).json({})
-
+        console.log("hii");
         const { orderId } = req.body;
         const Order = await orderModel.findOne({ orderId }, { __v: 0, notes: 0 }).populate({
             path: "product",
