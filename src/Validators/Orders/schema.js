@@ -12,8 +12,12 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     qty: Joi.number().positive().max(5).required(),
     startDate: Joi.date().iso().greater(
         moment().add(0, 'day').toDate()
-    ).required(),
-    endDate: Joi.date().iso().min(Joi.ref("startDate")).required(),
+    ).required().messages({
+        'date.any': "Please enter a valid date range. Start date must come before end date."
+    }),
+    endDate: Joi.date().iso().min(Joi.ref("startDate")).required().messages({
+        'date.any': "Please enter a valid date range. Start date must come before end date."
+    }),
     referralCode: Joi.string()
 });
 
