@@ -595,7 +595,7 @@ const GET_ALL_ADDRESS = async (req, res, next) => {
         }
 
         if (!user.orderAddress.length) {
-            return next(createHttpError(400, "Address is not available at this moment"))
+            return next(createHttpError(400, "There is no address with this user"))
         }
 
         return res.status(200).json({

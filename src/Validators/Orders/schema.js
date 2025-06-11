@@ -13,17 +13,26 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     startDate: Joi.date().iso().greater(
         moment().add(0, 'day').toDate()
     ).required().messages({
-        'date.any': "Please enter a valid date range. Start date must come before end date.",
+        'date.base': 'Start date must be in correct format.',
+        'date.format': 'Please enter correct date so we can proceeed your order',
+        'date.iso': 'Start date must be in ISO 8601 format.',
         'date.greater': 'Start date must be in the future.',
-        'date.base': 'Start date must be a valid date.',
         'any.required': 'Start date is required.',
-
+        'any.invalid': 'Invalid star date',
+        'any.only': 'Start date must be one of the allowed values',
+        'any.default': 'Start date has a default error.',
+        'any.unknown': 'Start date is unknown.',
     }),
     endDate: Joi.date().iso().min(Joi.ref("startDate")).required().messages({
-        'date.any': "Please enter a valid date range. Start date must come before end date.",
-        'any.required': "This field is required.",
-        'date.base': "Please enter correct date format so we can proceeed your order",
-        "any.required": "Invalid date format for end date "
+        'date.base': 'Order end date must be in correct format.',
+        'date.format': 'Please enter correct date so we can proceeed your order',
+        'date.iso': 'Please enter correct date so we can proceeed your order',
+        'date.greater': 'End date must be in the future.',
+        'any.required': 'Invalid end date',
+        'any.invalid': 'Invalid end date',
+        'any.only': 'End date must be one of the allowed values',
+        'any.default': 'End date has a default error.',
+        'any.unknown': 'End date is unknown.',
     }),
     referralCode: Joi.string()
 });
