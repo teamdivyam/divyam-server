@@ -13,10 +13,17 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
     startDate: Joi.date().iso().greater(
         moment().add(0, 'day').toDate()
     ).required().messages({
-        'date.any': "Please enter a valid date range. Start date must come before end date."
+        'date.any': "Please enter a valid date range. Start date must come before end date.",
+        'date.greater': 'Start date must be in the future.',
+        'date.base': 'Start date must be a valid date.',
+        'any.required': 'Start date is required.',
+
     }),
     endDate: Joi.date().iso().min(Joi.ref("startDate")).required().messages({
-        'date.any': "Please enter a valid date range. Start date must come before end date."
+        'date.any': "Please enter a valid date range. Start date must come before end date.",
+        'any.required': "This field is required.",
+        'date.base': "Please enter correct date format so we can proceeed your order",
+        "any.required": "Invalid date format for end date "
     }),
     referralCode: Joi.string()
 });
