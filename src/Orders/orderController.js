@@ -78,18 +78,14 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "There is no address available for this order please add to procees"))
         }
 
-        if (!isUserAvailable?.orderAddress) {
-            return next(createHttpError(400, "Delivery address are required field"))
-        }
-
         const orderDeliveryAddress = isUserAvailable?.orderAddress.filter((item, idx) => {
             if (item.isActive) {
                 return item;
             }
         });
 
-        if (!orderDeliveryAddress[0].pinCode) {
-            return next(createHttpError(400, "We need complete address to proceed your order"))
+        if (!orderDeliveryAddress.length) {
+            return next(createHttpError(400, "We need your complete address to proceed order"))
         }
 
         // chech-for-availibilty
