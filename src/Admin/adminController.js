@@ -251,9 +251,21 @@ const GET_SINGLE_USERS = async (req, res, next) => {
     }
 }
 
+
+// still holding transactions in the db for future safety
+const DELETE_USER_ORDER = async (orderId) => {
+    try {
+        const order = await orderModel.findByIdAndDelete(orderId);
+        if (order) {
+            logger.info("All the orders from this User has been deleted Successfully")
+        }
+    } catch (error) {
+        throw new Error("Can't delete order | Internal error")
+    }
+}
+
 const DELETE_SINGLE_USERS = async (req, res, next) => {
     try {
-
         const USER_ID = req?.params?.USER_ID;
 
         if (!USER_ID) {
@@ -266,18 +278,22 @@ const DELETE_SINGLE_USERS = async (req, res, next) => {
             return next(createHttpError(401, "User not found.."))
         }
 
+        if (user?.orders.length) {
+            user?.orders.forEach(async (orderId) => {
+                await DELETE_USER_ORDER(orderId);
+            });
+        }
         // On Success
-
         return res.status(200).json({
             success: true,
-            msg: "Successfully deleted user.."
+            msg: "Successfully deleted user"
         })
 
     } catch (error) {
-        logger.error(`${error}, Error msg ${error.message}`)
-        return next(createHttpError(500, "Internal error"))
+        logger.error(`${error}, Error msg ${error.message}`);
     }
 }
+
 // VIEW_ADMIN_PROFILE
 
 const VIEW_ADMIN_PROFILE = async (req, res, next) => {
