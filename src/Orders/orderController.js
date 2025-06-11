@@ -88,6 +88,10 @@ const NEW_ORDER = async (req, res, next) => {
             }
         });
 
+        if (!orderDeliveryAddress[0].pinCode) {
+            return next(createHttpError(400, "We need complete address to proceed your order"))
+        }
+
         // chech-for-availibilty
         const isOrderAvailableInYourPinCode = await AreaZoneModel.findOne(
             {
