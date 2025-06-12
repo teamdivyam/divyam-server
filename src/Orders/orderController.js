@@ -65,9 +65,7 @@ const NEW_ORDER = async (req, res, next) => {
         const startBookingDate = new Date(startDate);
         //  new Date(startDate)
         const endBookingDate = new Date(endDate)
-
         const productQuantity = qty || 1;
-
         const isUserAvailable = await userModel.findById(USER_ID);
 
         if (!isUserAvailable) {
@@ -88,7 +86,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(400, "We need your complete address to proceed order"))
         }
 
-        // chech-for-availibilty
+        // chech-for-available-pinCode's
         const isOrderAvailableInYourPinCode = await AreaZoneModel.findOne(
             {
                 areaPinCode: orderDeliveryAddress[0].pinCode,

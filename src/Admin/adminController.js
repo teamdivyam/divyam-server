@@ -623,6 +623,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
                 model: "Booking",
                 select: { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 }
             })
+
             .lean();
 
         if (!Order) {

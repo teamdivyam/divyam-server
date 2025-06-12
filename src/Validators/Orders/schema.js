@@ -24,6 +24,7 @@ const VALIATE_ORDER_BODY_SCHEMA = Joi.object({
         'any.unknown': 'Start date is unknown.',
     }),
     endDate: Joi.date().iso().min(Joi.ref("startDate")).required().messages({
+        'date.min': 'Order end date must be in correct format.',
         'date.base': 'Order end date must be in correct format.',
         'date.format': 'Please enter correct date so we can proceeed your order',
         'date.iso': 'Please enter correct date so we can proceeed your order',
