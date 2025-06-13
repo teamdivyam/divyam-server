@@ -453,7 +453,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
         const UserOrders = await userModel.findById(USER_ID, { orders: 1 })
             .populate({
                 path: "orders",
-                select: { product: 1, booking: 1 },
+                select: { product: 1, booking: 1, orderStatus: 1, },
                 populate: [
                     {
                         path: "product.productId",
@@ -468,7 +468,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                     {
                         path: "booking",
                         model: "Booking",
-                        select: "address",
+                        select: { _id: 0, address: 1 },
                         options: { strictPopulate: false }
                     },
                     {
