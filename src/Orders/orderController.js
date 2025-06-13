@@ -460,14 +460,14 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                         path: "productImg",
                         model: "productsimg",
                     }
+                },
+
+                populate: {
+                    path: "booking",
+                    model: "Booking",
+                    select: "address"
                 }
-            })
-            .populate({
-                path: "booking",
-                model: "Booking",
-                strictPopulate: false
-            })
-            .exec();
+            }).exec()
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
