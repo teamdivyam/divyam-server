@@ -450,24 +450,38 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong."))
         }
 
-        const UserOrders = await userModel.findById(USER_ID)
+        const UserOrders = await userModel.findById(USER_ID, { orders: 1 })
             .populate({
                 path: "orders",
-                populate: {
-                    path: "product.productId",
-                    model: "Package",
-                    populate: {
-                        path: "productImg",
-                        model: "productsimg",
+                select: { product: 1, booking: 1 },
+                populate: [
+                    {
+                        path: "product.productId",
+                        model: "Package",
+                        select: { isVisible: 0, pkg_id: 0, isFeatured: 0, price: 0, policy: 0, packageListTextItems: 0, status: 0, notes: 0, __v: 0, updatedAt: 0, productBannerImgs: 0 },
+                        populate: {
+                            path: "productImg",
+                            model: "productsimg",
+                            options: { strictPopulate: false }
+                        }
+                    },
+                    {
+                        path: "booking",
+                        model: "Booking",
+                        select: "address",
+                        options: { strictPopulate: false }
+                    },
+                    {
+                        path: "transaction",
+                        model: "Transaction",
+                        select: "amount",
+                        options: { strictPopulate: false }
                     }
-                },
+                ]
 
-                populate: {
-                    path: "booking",
-                    model: "Booking",
-                    select: "address"
-                }
-            }).exec()
+            })
+            .exec();
+
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
@@ -478,7 +492,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             .json(
                 {
                     success: true,
-                    orders: UserOrders.orders
+                    orders: UserOrders?.orders
                 }
             );
 
