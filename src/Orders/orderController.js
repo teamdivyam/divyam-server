@@ -435,6 +435,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
 };
 
 
+// USED_IN_THE_USER_DASHBOARD
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
@@ -464,10 +465,10 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                     }
                 },
             })
-            .populate({
-                path: "booking",
-                model: "Booking",
-            })
+            // .populate({
+            //     path: "booking",
+            //     model: "Booking",
+            // })
             .exec();
 
         if (!UserOrders) {
