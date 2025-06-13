@@ -462,6 +462,11 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                     }
                 }
             })
+            .populate({
+                path: "booking",
+                model: "Booking",
+                strictPopulate: false
+            })
             .exec();
 
         if (!UserOrders) {
