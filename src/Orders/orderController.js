@@ -452,7 +452,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
         const UserOrders = await userModel.findById(USER_ID)
             .populate({
                 path: "orders",
-                select: "product orderStatus payment totalAmount",
+                select: "",
                 populate: {
                     path: "product.productId",
                     model: "Package",
@@ -462,7 +462,11 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
                         model: "productsimg",
                         select: { imgSrc: 1, imagePath: 1, id: 1 }
                     }
-                }
+                },
+            })
+            .populate({
+                path: "booking",
+                model: "Booking",
             })
             .exec();
 
@@ -742,6 +746,7 @@ const GET_ALL_BOOKINGS = async (req, res, next) => {
 }
 
 const GET_FILTERED_ORDER = async (req, res, next) => {
+    console.log("CALLED")
     try {
         const { error, value } = GET_FILTERED_ORDER_VALIDATION_SCHEMA.validate(req.query);
 
@@ -759,7 +764,6 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         if (filterBy === "Success") {
             filterBy = "Delivered"
         }
-        console.log(filterBy);
 
         const Order = await OrderModel.find(
             {
@@ -775,7 +779,7 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         ).skip(skip).limit(limit)
             .populate({
                 path: "transaction",
-                select: "amount status gateway paymentMethod -_id"
+                select: "amount status gateway paymentMethod -_id",
             })
 
         return res.status(200).json({

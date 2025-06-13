@@ -605,7 +605,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
             populate: {
                 path: 'productId',
                 model: "Package",
-                select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 }
+                select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 },
             }
         })
             .populate({
