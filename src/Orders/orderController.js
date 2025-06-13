@@ -453,28 +453,21 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
         const UserOrders = await userModel.findById(USER_ID)
             .populate({
                 path: "orders",
+                populate: {
+                    path: "product.productId",
+                    model: "Package",
+                    populate: {
+                        path: "productImg",
+                        model: "productsimg",
+                    }
+                }
+            })
+            .populate({
+                path: "booking"
             })
             .exec();
-        // .populate({
-        //     path: "booking",
-        //     model: "Booking",
-        // })
 
-        // const UserOrders = await userModel.findById(USER_ID)
-        // .populate({
-        //     path: "orders",
-        //     select: "",
-        //     populate: {
-        //         path: "product.productId",
-        //         model: "Package",
-        //         select: "name description productImg slug",
-        //         populate: {
-        //             path: "productImg",
-        //             model: "productsimg",
-        //             select: { imgSrc: 1, imagePath: 1, id: 1 }
-        //         }
-        //     },
-        // })
+
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
