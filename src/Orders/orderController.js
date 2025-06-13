@@ -464,11 +464,10 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             })
             .populate({
                 path: "booking",
+                model: "Booking",
                 option: { strictPopulate: false }
             })
             .exec();
-
-
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
