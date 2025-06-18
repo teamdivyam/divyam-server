@@ -23,6 +23,7 @@ import {
     GET_ALL_ORDERS_BY_USER_ID,
     GET_SINGLE_ORDERS,
     NEW_ORDER,
+    NEW_ORDER_V2,
     ORDER_CANCEL,
     SAVE_CART,
     verifyPayments
@@ -87,6 +88,8 @@ Route.post('/check-pincode', PINCODE_VERIFY);
 
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
+Route.post('/user/v1/new-order', authUser, NEW_ORDER_V2);
+// Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', authUser, verifyPayments);
 Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca download their invoice
 

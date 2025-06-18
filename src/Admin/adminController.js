@@ -491,27 +491,8 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
 
 const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
     try {
-        // get-user-info
-        // get-order-info
-        const fetchOrder = await orderModel.find({}, { _id: 0 });
-
-        // on error
-        if (!fetchOrder || !fetchOrder.length) {
-            return next(createHttpError(400, "Something went wrong"))
-        }
 
 
-        const fetchUsers = await userModel.find();
-
-        // on error
-        if (!fetchUsers || !fetchUsers) {
-            return next(createHttpError(400, "Something went wrong"))
-        }
-
-        return res.json({
-            Orders: fetchOrder.length,
-            Users: fetchUsers.length
-        })
 
     } catch (error) {
         return next(createHttpError(400, "Internal error"))
@@ -598,7 +579,6 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
 // Only for internal Communication
 const GET_ORDER_DETAILS = async (req, res, next) => {
     try {
-        console.log("hii");
         const { orderId } = req.body;
         const Order = await orderModel.findOne({ orderId }, { __v: 0, notes: 0 }).populate({
             path: "product",
@@ -606,6 +586,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
                 path: 'productId',
                 model: "Package",
                 select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 },
+                options: { strictPopulate: false }
             }
         })
             .populate({
@@ -630,12 +611,14 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
             return next(createHttpError(400, "Internal Error | can't fetch order details "))
         }
 
-        const orderCompletedAt = moment(Order?.transaction?.completedAt).format("MM/DD/YYYY HH:mm:ss")
+        const momentFormatDate = moment(Order?.transaction?.completedAt).format("DD/MM/YYYY HH:MM:SS");
+
+        const formattedOrderdate = momentFormatDate - 5.30;
 
         return res.status(200).json({
             success: true,
             Order,
-            orderCompletedAt
+            orderCompletedAt: formattedOrderdate
         });
 
     } catch (error) {

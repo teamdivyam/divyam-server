@@ -31,11 +31,23 @@ const invokeLambda = async (payload) => {
 }
 
 
+/**
+ * Todo:
+ *    #UPDATE_INSIDE_ORDER_DOCS
+ *      -ORDER_STATUS = SUCCESS
+ *       add notes data form razorpay info__
+ *       UPDATE_Transuction docs 
+ *       Update_booking_info
+ *       invoke lmabda       
+ * 
+ * 
+ * 
+ */
 
 // for success payments
 const handleCapturedPayments = async (payment) => {
     const session = await mongoose.startSession();
-    session.startTransaction()
+    session.startTransaction();
 
     const orderId = payment.order_id;  //orderID
     try {
@@ -44,11 +56,13 @@ const handleCapturedPayments = async (payment) => {
         if (!Order) {
             await session.abortTransaction();
             throw new Error("Something went wrong.")
+            return
         }
 
         if (!payment.captured) {
             await session.abortTransaction();
             throw new Error("Payment failed...");
+            return
         }
 
         const orderNotes = `
@@ -80,7 +94,7 @@ const handleCapturedPayments = async (payment) => {
         Order.notes = orderNotes.trim();
         await Order.save();
 
-        // attacch order with user 
+        // attacch order 
         const user = await userModel.findById({ _id: Order.customer });
         if (!user) {
             await session.abortTransaction();

@@ -4,7 +4,7 @@ import crypto, { createVerify } from "crypto"
 import PackageModel from "../Package/PackageModel.js";
 import userModel from '../Users/userModel.js';
 import Razorpay from "razorpay";
-import mongoose from "mongoose";
+import mongoose, { startSession } from "mongoose";
 import OrderModel from "./orderModel.js";
 import generateOrderID from "../Counter/counterController.js";
 import AreaZoneModel from "../AreaZone/areaZoneModel.js";
@@ -28,6 +28,7 @@ import {
 import TransactionModel from "./transactionModel.js";
 import logger from "../logger/index.js";
 import { invokeLambda } from "./Hooks/handleSuccessPayment.js";
+import { isReferralCodeValid } from "../utils/isReferralCodeValid.js";
 
 
 var instance = new Razorpay({
@@ -46,7 +47,6 @@ const encryptStr = (string, secret) => {
 const NEW_ORDER = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
     try {
         const USER_ID = req.user.id;
 
@@ -61,11 +61,14 @@ const NEW_ORDER = async (req, res, next) => {
         }
         const { packageID, qty, startDate, endDate, referralCode, } = req.body;
 
-
         const startBookingDate = new Date(startDate);
-        //  new Date(startDate)
         const endBookingDate = new Date(endDate)
         const productQuantity = qty || 1;
+
+
+
+        // check
+
         const isUserAvailable = await userModel.findById(USER_ID);
 
         if (!isUserAvailable) {
@@ -145,9 +148,18 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(500, "Payment gateway error"));
         }
 
-        // console.log("LOG_6");
+        // check referralCode is valid 
+        let isOrderReferralCodeValid;
+        if (referralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+        }
 
-        // console.log("LOG_6.1");
+        const comissionPercentage = 15;
+        const referralComission = (totalAmount * comissionPercentage) / 100;
+        const userAmount = totalAmount - referralComission;
+
+        const completeProductPrice = isOrderReferralCodeValid === true ? userAmount : totalAmount;
+        console.log("completeProductPrice", completeProductPrice);
 
         const createOrder = new OrderModel(
             {
@@ -158,11 +170,10 @@ const NEW_ORDER = async (req, res, next) => {
                     quantity: productQuantity,
                     price: totalAmount
                 },
-                totalAmount: totalAmount
+                totalAmount: completeProductPrice
             }
         );
 
-        // console.log("LOG_6.2");
 
         if (!createOrder) {
             await session.abortTransaction();
@@ -192,9 +203,7 @@ const NEW_ORDER = async (req, res, next) => {
         if (!NEW_BOOKING) {
             await session.abortTransaction();
             return next(createHttpError(400, "Oops eomthing went wrong, please try agaian later."))
-
         }
-
         createOrder.booking = NEW_BOOKING[0]._id;
         await createOrder.save({ session });
 
@@ -205,7 +214,7 @@ const NEW_ORDER = async (req, res, next) => {
                     user: USER_ID,
                     order: createOrder._id,
                     gatewayOrderId: razorpayOrder.id,
-                    amount: totalAmount,
+                    amount: completeProductPrice,
                     status: "processing"
                 }
             ],
@@ -218,11 +227,12 @@ const NEW_ORDER = async (req, res, next) => {
         }
 
         await session.commitTransaction();
+
         return res.status(201).json({
             status: 201,
             message: "Order created successfully",
             orderId: razorpayOrder.id,
-            amount: totalAmount,
+            amount: completeProductPrice,
             notes //options-used in frontend
         });
 
@@ -238,9 +248,189 @@ const NEW_ORDER = async (req, res, next) => {
 };
 
 
+
+const NEW_ORDER_V2 = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    const USER_ID = req.user.id || null;
+
+    try {
+        const { error, value } = VALIATE_ORDER_BODY_SCHEMA.validate(req.body);
+
+        if (error) {
+            await session.abortTransaction();
+            return next(createHttpError(400, error?.details[0].message))
+        }
+        const { packageID, qty, startDate, endDate, referralCode, } = req.body;
+
+        const startBookingDate = new Date(startDate);
+        const endBookingDate = new Date(endDate);
+        const productQuantity = qty || 1;
+
+        // Check User and his shipping address
+        const User = await userModel.findById(USER_ID);
+
+        if (!User) {
+            await session.abortTransaction()
+            return next(createHttpError(400, "Invalid Request"))
+        }
+
+        if (!User?.orderAddress) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "There is no address available for this order please add to procees"));
+        }
+
+        const shippingAddress = User?.orderAddress.filter((item, idx) => {
+            if (item.isActive) {
+                return item;
+            }
+        });
+
+        if (!shippingAddress.length) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "We need your complete address to proceed order"))
+        }
+
+        // chech-for-available-pinCode's
+        const isUserShippingPinCodeAvailable_IN_OUR_AREA_ZONE = await AreaZoneModel.findOne(
+            {
+                areaPinCode: shippingAddress[0].pinCode,
+                isAvailable: true
+            }
+        );
+
+        if (!isUserShippingPinCodeAvailable_IN_OUR_AREA_ZONE) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Our Services are not avaialable in your area"))
+        }
+
+        //  process order
+        const orderedItem = await PackageModel.findById(packageID).lean();
+
+        if (!orderedItem) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Invalid Request"))
+        }
+
+        const productCost = orderedItem.price;
+        const totalProductAmount = productCost * productQuantity || 0;
+
+        const razorpayOrder = await instance.orders.create({
+            amount: totalProductAmount * 100,
+            currency: "INR",
+            receipt: `order_${new Date().getTime()}`,
+        });
+
+        if (!razorpayOrder) {
+            await session.abortTransaction();
+            return next(createHttpError(500, "Payment gateway error"));
+        }
+
+        // create new order
+        const createOrder = new OrderModel(
+            {
+                orderId: razorpayOrder.id,
+                customer: USER_ID,
+                product: {
+                    productId: packageID,
+                    quantity: productQuantity,
+                    price: productCost
+                },
+                orderStatus: "Processing",
+                totalAmount: totalProductAmount
+            }
+        );
+
+        // check and abort transaction
+        if (!createOrder) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Failed to place order. Please try again."));
+        }
+
+        // CREATE_NEW_BOOKING
+        const NEW_BOOKING = await bookingModel.create(
+            [{
+                startDate: startBookingDate,
+                endDate: endBookingDate,
+                resourceId: packageID,
+                customerId: USER_ID,
+                orderId: createOrder._id,
+                address: {
+                    landMark: shippingAddress[0].landMark,
+                    city: shippingAddress[0].city,
+                    state: shippingAddress[0].state,
+                    contactNumber: User.mobileNum,
+                    pinCode: shippingAddress[0].pinCode,
+                    area: shippingAddress[0].area,
+                }
+            }],
+            { session }
+        );
+
+        if (!NEW_BOOKING) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Oops something went wrong, please try agaian later."))
+        }
+
+        // CREATE_TRANSACTION
+        const TRANSACTION = await TransactionModel.create(
+            [
+                {
+                    user: USER_ID,
+                    order: createOrder._id,
+                    gatewayOrderId: razorpayOrder.id,
+                    amount: totalProductAmount,
+                    status: "processing"
+                }
+            ],
+            { session: session }
+        );
+
+        if (!TRANSACTION) {
+            await sessabortTransaction()
+            return next(createHttpError(400, "Please Try again later-Internal Error"))
+        }
+
+        // save inside order
+        createOrder.booking = NEW_BOOKING[0]._id;
+        createOrder.transaction = TRANSACTION._id; //save transaction id inside order
+        await createOrder.save({ session });
+
+        // push Order inside User Account with status Processing
+        // razorpay webhook will auto verify and update the status  to Pending 
+
+        if (!User.orders.includes(createOrder._id)) {
+            // push new order in the user account
+            User.orders.push(createOrder._id);
+            await User.save();
+        }
+
+        const notes = {
+            fullName: User.fullName || null,
+            email: User.email || null,
+            contact: User.mobileNum || null
+        }
+
+        await session.commitTransaction();
+
+        return res.status(201).json({
+            status: 201,
+            message: "Order created successfully",
+            orderId: razorpayOrder.id,
+            amount: totalProductAmount,
+            notes //options-used in frontend
+        });
+
+        // createOrder
+    } catch (error) {
+        return next(createHttpError(400, `Internal error ${error}`))
+    }
+}
+
+
 /**
  * 
- * AFTER VERIFICATION OF SIGNATURE I PROCESS ORDERS
+ * AFTER VERIFICATION OF SIGNATURE PROCESS ORDERS,
  * NOTIFICATIONS AND OTHER QUEUE BASED SERVICES
  * 
  */
@@ -312,7 +502,6 @@ const verifyPayments = async (req, res, next) => {
 
         // call Referral API
         const totalAmount = rzrVerifyPayments.amount_paid / 100;
-        const userComission = (totalAmount * 5) / 100;
 
         // Todo: - set comission amount
         await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
@@ -937,5 +1126,6 @@ export {
     DOWNLOAD_INVOICE,
     ATTACH_INVOICE_WITH_ORDER,
     GET_ALL_BOOKINGS,
-    GET_BOOKINGS
+    GET_BOOKINGS,
+    NEW_ORDER_V2
 }

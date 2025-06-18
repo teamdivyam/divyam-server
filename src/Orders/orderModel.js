@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
-
+        referralCode: { type: String, default: null },
         booking: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Booking",
@@ -33,7 +33,7 @@ const orderSchema = new mongoose.Schema(
             type: String,
             enum: [
                 "Processing",  //Initiated by system while new order created
-                "Pending", // after Payment Complete
+                "Pending", // after Payment Completed
                 "Packed", // set by admin
                 "Shipped", // set by admin
                 "Delivered", // set by admin
