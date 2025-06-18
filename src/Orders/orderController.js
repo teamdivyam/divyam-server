@@ -912,7 +912,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
                     path: "transaction",
                     model: "Transaction"
                 }
-            ).limit(Limit).skip(SKIP).sort({ createdAt: -1 })
+            ).limit(LIMIT).skip(SKIP).sort({ createdAt: -1 })
 
         if (!orders) {
             return next(createHttpError(400, "Something went wrong.."))
