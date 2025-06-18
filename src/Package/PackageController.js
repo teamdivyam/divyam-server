@@ -370,7 +370,7 @@ const GET_ALL_PACKAGE_FOR_USERS = async (req, res, next) => {
 
         const skip = (PAGE - 1) * LIMIT;
 
-        let Package = await PackageModel.find({ $eq: { isDeleted: false, isVisible: true, } },
+        let Package = await PackageModel.find({ isVisible: true, isDeleted: { $eq: false } },
             { createdAt: 0, updatedAt: 0, __v: 0, productBannerImgs: 0 })
             .populate({ path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } })
             .skip(skip)
