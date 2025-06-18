@@ -899,18 +899,24 @@ const GET_ALL_ORDERS = async (req, res, next) => {
                 populate: {
                     path: "productId",
                     model: "Package"
-                }
+                },
+                options: { strictPopulate: false }
             })
             .populate(
                 {
                     path: "booking",
-                    model: "Booking"
+                    model: "Booking",
+                    select: { startDate: 1, endDate: 1 },
+                    options: { strictPopulate: false }
+
                 }
             )
             .populate(
                 {
                     path: "transaction",
-                    model: "Transaction"
+                    model: "Transaction",
+                    select: { amount: 1, status: 1, paymentMethod: 1 },
+                    options: { strictPopulate: false }
                 }
             ).limit(LIMIT).skip(SKIP).sort({ createdAt: -1 })
 
