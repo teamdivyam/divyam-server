@@ -107,7 +107,6 @@ const ADD_NEW_PACKAGE = async (req, res, next) => {
 
 const UPDATE_PACKAGE = async (req, res, next) => {
     const SLUG = req.params?.PERMALINK;
-
     if (!SLUG) {
         return next(createHttpError(401, "Invalid Package Id."));
     }
@@ -191,7 +190,7 @@ const UPDATE_PACKAGE = async (req, res, next) => {
 
         // Update Package
         const UPDATED_PACKAGE = await PackageModel.findOneAndUpdate(
-            { slug: SLUG },
+            { slug: SLUG, $eq: { isDeleted: false } },
             {
                 name,
                 description,
@@ -233,7 +232,13 @@ const DELETE_SINGLE_PACKAGE = async (req, res, next) => {
         }
 
         // check in db too..
-        const delPackage = await PackageModel.findByIdAndDelete(PKG_ID)
+        // const delPackage = await PackageModel.findByIdAndDelete(PKG_ID)
+
+        // Soft delete
+
+        const delPackage = await PackageModel.findByIdAndUpdate(PKG_ID, {
+            isDeleted: true,
+        });
 
         if (!delPackage) {
             return next(createHttpError(401, "There is no package with this ID"))
@@ -292,7 +297,8 @@ const GET_ALL_FEATURED_PACKAGE = async (req, res, next) => {
         const getFeaturedPackage = await PackageModel.find(
             {
                 isFeatured: true,
-                isVisible: true
+                isVisible: true,
+                $eq: { isDeleted: false }
             })
             .populate(
                 { path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } }
@@ -330,7 +336,7 @@ const GET_ALL_PACKAGE = async (req, res, next) => {
 
         const skip = (PAGE - 1) * LIMIT;
 
-        let Package = await PackageModel.find({},
+        let Package = await PackageModel.find({ $eq: { isDeleted: false } },
             { createdAt: 0, updatedAt: 0, __v: 0, productBannerImgs: 0 })
             .populate({ path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } })
             .skip(skip)
@@ -364,7 +370,7 @@ const GET_ALL_PACKAGE_FOR_USERS = async (req, res, next) => {
 
         const skip = (PAGE - 1) * LIMIT;
 
-        let Package = await PackageModel.find({ isVisible: true },
+        let Package = await PackageModel.find({ isVisible: true, $eq: { isDeleted: false } },
             { createdAt: 0, updatedAt: 0, __v: 0, productBannerImgs: 0 })
             .populate({ path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } })
             .skip(skip)
@@ -390,7 +396,7 @@ const GET_SINGLE_PACKAGE = async (req, res, next) => {
         return next(createHttpError(401, "404 not found"))
     }
 
-    const isPackageExists = await PackageModel.findOne({ slug: PKG_PERMALINK },
+    const isPackageExists = await PackageModel.findOne({ slug: PKG_PERMALINK, $eq: { isDeleted: false } },
         { createdAt: 0, updatedAt: 0, __v: 0 })
         .populate(
             {
@@ -421,7 +427,7 @@ const GET_SINGLE_PACKAGE_FOR_USERS = async (req, res, next) => {
     try {
         const SLUG = req.params.SLUG;
 
-        const Package = await PackageModel.findOne({ slug: SLUG, isVisible: true },
+        const Package = await PackageModel.findOne({ slug: SLUG, isVisible: true, $eq: { isDeleted: false } },
             { slug: 0, __v: 0, createdAt: 0, updatedAt: 0, isFeatured: 0 })
             .populate(
                 {

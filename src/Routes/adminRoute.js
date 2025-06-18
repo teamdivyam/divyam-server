@@ -110,7 +110,6 @@ AdminRoute.delete('/user/:USER_ID', isAdmin, DELETE_SINGLE_USERS);
 AdminRoute.get('/profile', isAdmin, VIEW_ADMIN_PROFILE);
 AdminRoute.post('/change-password', isAdmin, CHANGE_ADMIN_PASSWORD);
 // get-order-details-by-user
-
 // SEARCH USERS
 AdminRoute.get('/search-user', isAdmin, SEARCH_USERS);
 AdminRoute.get('/search-orders', isAdmin, SEARCH_ORDERS);

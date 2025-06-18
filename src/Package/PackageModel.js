@@ -38,7 +38,7 @@ const PackageSchema = new Schema({
         type: Number,
         required: true
     },
-
+    isDeleted: { type: Boolean, default: false },
     notes: { type: String, },
 }, { timestamps: true })
 
