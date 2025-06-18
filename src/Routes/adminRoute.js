@@ -27,11 +27,10 @@ import {
     ATTACH_INVOICE_WITH_ORDER,
     CHANGE_ORDER_STATUS,
     GET_ALL_BOOKINGS,
-    GET_ALL_ORDERS,
-    GET_ALL_ORDERS_BY_USER_ID,
     GET_BOOKINGS,
     GET_FILTERED_ORDER,
-    GET_SINGLE_ORDERS
+    GET_NEW_ORDERS,
+    GET_ALL_ORDERS
 } from "../Orders/orderController.js";
 // AUTH..
 import isAdmin from "../middleware/isAdmin.js";
@@ -62,7 +61,7 @@ import {
     UNSET_SUPERVISOR_FROM_MANAGER
 } from "../Employee/controller/EmployeeController.js";
 import { nanoid } from "nanoid";
-import logger from "../logger/index.js";
+
 
 const AdminRoute = express.Router();
 
@@ -94,14 +93,22 @@ AdminRoute.patch('/package/:PERMALINK', isAdmin, UPDATE_PACKAGE);
 AdminRoute.delete('/package/:PKG_ID', isAdmin, DELETE_SINGLE_PACKAGE);
 
 // Orders  (ALl THE ROUTES Manage by ADMIN..)
+/**
+ * Todo _
+ *      Rename and write orders and new Order api again using oprators
+ */
+
+AdminRoute.get('/order-new/', isAdmin, GET_NEW_ORDERS);
+AdminRoute.get('/orders', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/booking/:BOOKING_ID', isAdmin, GET_BOOKINGS);
 AdminRoute.get('/order/success', GET_ALL_BOOKINGS) // get all the success order and its bookings info
-AdminRoute.get('/order/', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/:ORDER_ID', isAdmin, VIEW_SINGLE_ORDER_ADMIN);
 AdminRoute.get('/order-filter', isAdmin, GET_FILTERED_ORDER);
 AdminRoute.patch('/order/:ORDER_ID', isAdmin, CHANGE_ORDER_STATUS);
-AdminRoute.post('/order-details', GET_ORDER_DETAILS); // For Internal comunication
+
+// For Internal comunication
 AdminRoute.post('/attach-invoice', ATTACH_INVOICE_WITH_ORDER)
+AdminRoute.post('/order-details', GET_ORDER_DETAILS);
 
 // USER-INFO-MANAGED_BY_ADMIN
 AdminRoute.get('/users/', isAdmin, GET_ALL_USERS);

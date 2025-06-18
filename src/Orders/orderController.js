@@ -43,7 +43,7 @@ const encryptStr = (string, secret) => {
 }
 
 
-// Create Orders
+// Place NEW ORDER
 const NEW_ORDER = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -248,7 +248,7 @@ const NEW_ORDER = async (req, res, next) => {
 };
 
 
-
+// GET_NEW_ORDERS
 const NEW_ORDER_V2 = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -816,7 +816,7 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
  */
 
 
-const GET_ALL_ORDERS = async (req, res, next) => {
+const GET_NEW_ORDERS = async (req, res, next) => {
     const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
 
     if (error) {
@@ -872,6 +872,57 @@ const GET_ALL_ORDERS = async (req, res, next) => {
             }
         )
 
+}
+
+
+
+
+
+// TODO_
+const GET_ALL_ORDERS = async (req, res, next) => {
+    try {
+        const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
+
+        if (error) {
+            return next(createHttpError(400, error?.details[0].message))
+        }
+
+        const orders = await OrderModel.find()
+            .populate({
+                path: "product",
+                populate: {
+                    path: "productId",
+                    model: "Package"
+                }
+            })
+            .populate(
+                {
+                    path: "booking",
+                    model: "Booking"
+                }
+            )
+            .populate(
+                {
+                    path: "transaction",
+                    model: "Transaction"
+                }
+            );
+
+        if (!orders) {
+            return next(createHttpError(400, "Something went wrong.."))
+        }
+
+        // on success
+
+        return res.status(200).json(
+            {
+                success: true,
+                orders: orders
+            }
+        )
+    } catch (error) {
+
+    }
 }
 
 
@@ -1117,7 +1168,7 @@ export {
     NEW_ORDER,
     GET_ALL_ORDERS_BY_USER_ID,
     GET_SINGLE_ORDERS,
-    GET_ALL_ORDERS,
+    GET_NEW_ORDERS,
     CHANGE_ORDER_STATUS,
     GET_FILTERED_ORDER,
     verifyPayments,
@@ -1127,5 +1178,6 @@ export {
     ATTACH_INVOICE_WITH_ORDER,
     GET_ALL_BOOKINGS,
     GET_BOOKINGS,
-    NEW_ORDER_V2
+    NEW_ORDER_V2,
+    GET_ALL_ORDERS
 }
