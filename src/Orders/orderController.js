@@ -887,6 +887,12 @@ const GET_ALL_ORDERS = async (req, res, next) => {
             return next(createHttpError(400, error?.details[0].message))
         }
 
+        // const { page, limit } = req.query;
+
+        const PAGE = value.page || 1;
+        const LIMIT = value.limit || 10;
+        const SKIP = (PAGE - 1) * LIMIT;
+
         const orders = await OrderModel.find()
             .populate({
                 path: "product",
@@ -906,7 +912,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
                     path: "transaction",
                     model: "Transaction"
                 }
-            );
+            ).limit(Limit).skip(SKIP).sort({ createdAt: -1 })
 
         if (!orders) {
             return next(createHttpError(400, "Something went wrong.."))
@@ -921,7 +927,7 @@ const GET_ALL_ORDERS = async (req, res, next) => {
             }
         )
     } catch (error) {
-
+        return next(createHttpError(400, "Internal error."))
     }
 }
 
