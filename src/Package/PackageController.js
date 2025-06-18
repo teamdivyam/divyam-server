@@ -190,7 +190,10 @@ const UPDATE_PACKAGE = async (req, res, next) => {
 
         // Update Package
         const UPDATED_PACKAGE = await PackageModel.findOneAndUpdate(
-            { slug: SLUG, $eq: { isDeleted: false } },
+            {
+                slug: SLUG,
+                isDeleted: { $eq: false }
+            },
             {
                 name,
                 description,
@@ -298,7 +301,7 @@ const GET_ALL_FEATURED_PACKAGE = async (req, res, next) => {
             {
                 isFeatured: true,
                 isVisible: true,
-                $eq: { isDeleted: false }
+                isDeleted: { $eq: false }
             })
             .populate(
                 { path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } }
@@ -336,7 +339,7 @@ const GET_ALL_PACKAGE = async (req, res, next) => {
 
         const skip = (PAGE - 1) * LIMIT;
 
-        let Package = await PackageModel.find({ $eq: { isDeleted: false } },
+        let Package = await PackageModel.find({ isDeleted: { $eq: false } },
             { createdAt: 0, updatedAt: 0, __v: 0, productBannerImgs: 0 })
             .populate({ path: 'productImg', select: { _id: 0, 'imagePath': 1, isActive: 1, order: 1 } })
             .skip(skip)
@@ -396,7 +399,10 @@ const GET_SINGLE_PACKAGE = async (req, res, next) => {
         return next(createHttpError(401, "404 not found"))
     }
 
-    const isPackageExists = await PackageModel.findOne({ slug: PKG_PERMALINK, $eq: { isDeleted: false } },
+    const isPackageExists = await PackageModel.findOne({
+        slug: PKG_PERMALINK,
+        isDeleted: { $eq: false }
+    },
         { createdAt: 0, updatedAt: 0, __v: 0 })
         .populate(
             {
@@ -427,7 +433,10 @@ const GET_SINGLE_PACKAGE_FOR_USERS = async (req, res, next) => {
     try {
         const SLUG = req.params.SLUG;
 
-        const Package = await PackageModel.findOne({ slug: SLUG, isVisible: true, $eq: { isDeleted: false } },
+        const Package = await PackageModel.findOne({
+            slug: SLUG, isVisible: true,
+            isDeleted: { $eq: false }
+        },
             { slug: 0, __v: 0, createdAt: 0, updatedAt: 0, isFeatured: 0 })
             .populate(
                 {
