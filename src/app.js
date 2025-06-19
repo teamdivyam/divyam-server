@@ -9,8 +9,7 @@ import { config } from "./config/_config.js";
 import logger from "./logger/index.js";
 import globalErrorHandler from "./middleware/ErrorHandler.js";
 import { NEW_ORDER_WEB_HOOK } from "./Orders/Hooks/orderHook.js";
-import { nanoid } from "nanoid";
-import createHttpError from "http-errors";
+
 
 const app = express();
 app.use(express.json());
@@ -38,7 +37,7 @@ app.use(
         origin: allowedOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE'],
-        allowedHeaders: ['Authorization', 'Content-Type', 'Accept-Language', 'Cookie'],
+        allowedHeaders: ['Authorization', 'Content-Type', 'Accept-Language', 'Cookie', 'x-device-id'],
     })
 );
 
@@ -47,15 +46,15 @@ app.use(
  */
 const ipLimiter = rateLimit({
     windowMs: 60000 * 30,// 30 minutes
-    max: 2 * 1000, //5 Request.
+    max: 1 * 1000, //1 k req 
     message: 'Too many requests Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
 
     keyGenerator: (req) => {
-        const reqIP = req.ip;
-        const reqHost = req.headers
-        return reqIP;
+        const deviceId = req?.headers['x-device-id'];
+        console.log("DEVICE_ID", deviceId);
+        return deviceId;
     }
 });
 
@@ -79,16 +78,16 @@ app.get('/health', (req, res, next) => {
 
 const singleLimiter = rateLimit({
     windowMs: 60000 * 2,// 2 minutes
-    max: 5, //5 Request.
+    max: 50, //5 Request.
     message: 'Too many requests Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        const reqIP = req.ip;
-        return reqIP;
+        const deviceId = req?.headers['x-device-id'];
+        console.log("DEVICE_ID", deviceId);
+        return deviceId;
     }
 });
-
 
 app.get('/rate', singleLimiter, async (req, res, next) => {
     return res.status(200)

@@ -258,6 +258,7 @@ const WHOAMI = async (req, res, next) => {
             {
                 success: true,
                 statusCode: 200,
+                deviceId: nanoid(12),
                 user: {
                     isVerified: user?.isVerified,
                     fullName: user?.fullName || null,

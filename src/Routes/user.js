@@ -46,13 +46,17 @@ import { config } from "../config/_config.js";
 import isGuestUser from "../middleware/isGuestUser.js";
 
 const limitOTP = rateLimit({
-    windowMs: 60000 * 30,
-    max: config.OTP_RATE_LIMIT,
+    windowMs: 60000 * 5, //5 minutes
+    max: config.OTP_RATE_LIMIT || 5,
     standardHeaders: 'true',
     legacyHeaders: false,
     standardHeaders: true,
     message: 'Too many requests. Please try again later.',
-    keyGenerator: (req) => req.ip
+    keyGenerator: (req) => {
+        const deviceId = req?.headers['x-device-id'];
+        console.log("DEVICE_ID", deviceId);
+        return deviceId;
+    }
 });
 
 // Router for USERS...
