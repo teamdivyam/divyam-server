@@ -257,22 +257,25 @@ const WHOAMI = async (req, res, next) => {
 
         // on success
 
-        const deviceIdInHeader = req?.headers['x-device-id'];
-        let deviceId;
+        const deviceIdInHeader = req?.headers['x-device-id'] || null;
+        console.log(deviceIdInHeader);
 
-        if (!deviceIdInHeader) {
-            // create fesh device id 
-            deviceId = nanoid(20);
-        }
-        // use old one as a device id
-        deviceId = deviceIdInHeader
+        // let deviceId;
+        // if (deviceIdInHeader === null) {
+        //     // create fesh device id 
+        //     (async () => {
+        //         deviceId = nanoid(20)
+        //     })()
+        // }
+        // // use old one as a device id
+        // deviceId = deviceIdInHeader
 
         // on-Success
         return res.status(200).json(
             {
                 success: true,
                 statusCode: 200,
-                deviceId: deviceId,
+                deviceId: nanoid(20),
                 user: {
                     isVerified: user?.isVerified,
                     fullName: user?.fullName || null,
