@@ -53,7 +53,6 @@ const ipLimiter = rateLimit({
 
     keyGenerator: (req) => {
         const deviceId = req?.headers['x-device-id'];
-        console.log("DEVICE_ID", deviceId);
         return deviceId;
     }
 });
@@ -84,7 +83,6 @@ const singleLimiter = rateLimit({
     legacyHeaders: false,
     keyGenerator: (req) => {
         const deviceId = req?.headers['x-device-id'];
-        console.log("DEVICE_ID", deviceId);
         return deviceId;
     }
 });
