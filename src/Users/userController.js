@@ -275,7 +275,6 @@ const WHOAMI = async (req, res, next) => {
             {
                 success: true,
                 statusCode: 200,
-                deviceId: nanoid(20),
                 user: {
                     isVerified: user?.isVerified,
                     fullName: user?.fullName || null,
@@ -359,6 +358,7 @@ const VERIFY_OTP = async (req, res, next) => {
         res.cookie('token', token, COOKIES_CONFIG);
 
         return res.status(200).json({
+            id: user?._id,
             success: "true",
             msg: "OTP verified successfully",
         });
@@ -398,7 +398,7 @@ const GUEST_USER = async (req, res, next) => {
                 (browser.os.name === 'macOS' || browser.os.name === 'Windows' || browser.os.name === 'Linux'),
         }
 
-        console.log("USER_AGENT", userInfo);
+
         const session_ID = await jwt.sign(
             userInfo,
             config.GUEST_USERS_SECRET,
@@ -421,6 +421,7 @@ const GUEST_USER = async (req, res, next) => {
 
         return res.status(200).json(
             {
+                deviceId: nanoid(20),
                 success: true,
                 status: 200,
             }
