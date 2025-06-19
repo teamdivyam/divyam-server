@@ -249,16 +249,30 @@ const WHOAMI = async (req, res, next) => {
 
         const user = await userModel.findById(USER_ID).lean();
 
+
+
         if (!user) {
             return next(createHttpError(400, "Something went wrong"))
         }
+
+        // on success
+
+        const deviceIdInHeader = req?.headers['x-device-id'];
+        let deviceId;
+
+        if (!deviceIdInHeader) {
+            // create fesh device id 
+            deviceId = nanoid(20);
+        }
+        // use old one as a device id
+        deviceId = deviceIdInHeader
 
         // on-Success
         return res.status(200).json(
             {
                 success: true,
                 statusCode: 200,
-                deviceId: nanoid(12),
+                deviceId: deviceId,
                 user: {
                     isVerified: user?.isVerified,
                     fullName: user?.fullName || null,
