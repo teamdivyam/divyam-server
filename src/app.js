@@ -20,7 +20,7 @@ app.disable('x-powered-by');
 app.set('trust proxy', true);
 
 app.use((req, res, next) => {
-    logger.info(`Incoming request: ${req.method} ${req.url}`);
+    logger.info(`Incoming request: ${req.ip} ${req.method} ${req.url}`);
     next();
 });
 
@@ -71,6 +71,45 @@ app.get('/health', (req, res, next) => {
         }
     )
 });
+
+
+
+// SETUP_RATE_LIMITER
+
+
+const singleLimiter = rateLimit({
+    windowMs: 60000 * 2,// 2 minutes
+    max: 5, //5 Request.
+    message: 'Too many requests Please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        const reqIP = req.ip;
+        return reqIP;
+    }
+});
+
+
+app.get('/rate', singleLimiter, async (req, res, next) => {
+    return res.status(200)
+        .json({
+            success: true
+        })
+});
+
+
+app.get('/ip', async (req, res, next) => {
+    try {
+        return res.status(200).json({
+            ip: req.ip,
+            ips: req.ips
+        })
+    } catch (error) {
+        throw new Error(error)
+    }
+})
+
+
 // for-undeclared-routes
 app.use(function (req, res, next) {
     return res.status(400).json({

@@ -489,10 +489,19 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
     }
 }
 
+// { month: "January", order: 186, user: 102 },
 const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
     try {
 
+        const orders = await orderModel.find().countDocuments({ orderStatus: "Delivered" });
+        // // const users = await userModel.find().countDocuments();
 
+        // const getMonths = moment(Order?.createdAt).getMonths();
+
+        return res.status(200).json({
+            success: true,
+            "getMonths": orders
+        })
 
     } catch (error) {
         return next(createHttpError(400, "Internal error"))

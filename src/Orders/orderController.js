@@ -134,10 +134,30 @@ const NEW_ORDER = async (req, res, next) => {
         //     )
         // }
         // calc price included referral code
-        const totalAmount = Package.price * productQuantity;
-        // console.log("LOG_5.1");
+
+
+
+
+        const normalProductPrice = Package.price * productQuantity;
+        if (normalProductPrice <= 0 || !normalProductPrice || normalProductPrice == null) {
+            return next(createHttpError(500, "Internal server error"))
+        }
+
+        // check referralCode is valid 
+        let isOrderReferralCodeValid;
+
+        if (referralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+        }
+
+        const comissionPercentage = 15;
+        const discount = (normalProductPrice * comissionPercentage) / 100;
+        const disCountPrice = normalProductPrice - discount;
+
+        const finalProductPrice = isOrderReferralCodeValid === true ? disCountPrice : normalProductPrice;
+
         const razorpayOrder = await instance.orders.create({
-            amount: totalAmount * 100,
+            amount: finalProductPrice * 100,
             currency: "INR",
             receipt: `order_${new Date().getTime()}`,
         });
@@ -148,19 +168,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(500, "Payment gateway error"));
         }
 
-        // check referralCode is valid 
-        let isOrderReferralCodeValid;
-        if (referralCode) {
-            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
-        }
-
-        const comissionPercentage = 15;
-        const referralComission = (totalAmount * comissionPercentage) / 100;
-        const userAmount = totalAmount - referralComission;
-
-        const completeProductPrice = isOrderReferralCodeValid === true ? userAmount : totalAmount;
-        console.log("completeProductPrice", completeProductPrice);
-
+        console.log("COMPLETE_PRODUCT_PRICE", "BEFORE", Package.price, "AFTER", finalProductPrice);
         const createOrder = new OrderModel(
             {
                 orderId: razorpayOrder.id,
@@ -168,9 +176,10 @@ const NEW_ORDER = async (req, res, next) => {
                 product: {
                     productId: Package._id,
                     quantity: productQuantity,
-                    price: totalAmount
+                    price: Package.price
                 },
-                totalAmount: completeProductPrice
+                referralCode: referralCode,
+                totalAmount: finalProductPrice
             }
         );
 
@@ -214,7 +223,7 @@ const NEW_ORDER = async (req, res, next) => {
                     user: USER_ID,
                     order: createOrder._id,
                     gatewayOrderId: razorpayOrder.id,
-                    amount: completeProductPrice,
+                    amount: finalProductPrice,
                     status: "processing"
                 }
             ],
@@ -232,7 +241,7 @@ const NEW_ORDER = async (req, res, next) => {
             status: 201,
             message: "Order created successfully",
             orderId: razorpayOrder.id,
-            amount: completeProductPrice,
+            amount: finalProductPrice,
             notes //options-used in frontend
         });
 
@@ -325,6 +334,17 @@ const NEW_ORDER_V2 = async (req, res, next) => {
             await session.abortTransaction();
             return next(createHttpError(500, "Payment gateway error"));
         }
+
+        // verify referral Code
+        let isOrderReferralCodeValid;
+        if (referralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+        }
+
+        // calc commission and discount
+        const comissionPercentage = 15;
+        const discount = (totalProductAmount * 15) / 100;
+        const finalPrice = totalProductAmount = discount;
 
         // create new order
         const createOrder = new OrderModel(
@@ -434,6 +454,7 @@ const NEW_ORDER_V2 = async (req, res, next) => {
  * NOTIFICATIONS AND OTHER QUEUE BASED SERVICES
  * 
  */
+
 const API_REQ = async (referralCode, userId, orderId, amount) => {
     const API = `https://api-referral.divyam.com/api/referral/create-referral-event?referralCode=${referralCode}&refereeId=${userId}&orderId=${orderId}&amount=${amount}`;
 
@@ -481,7 +502,7 @@ const verifyPayments = async (req, res, next) => {
         const rzrVerifyPayments = await instance.orders.fetch(razorpay_order_id);
         console.log("VERIFY_API", rzrVerifyPayments);
 
-        if (rzrVerifyPayments.status !== 'paid') {
+        if (rzrVerifyPayments?.status !== 'paid') {
             return next(createHttpError(400, "Payment not completed"));
         }
 
@@ -504,7 +525,10 @@ const verifyPayments = async (req, res, next) => {
         const totalAmount = rzrVerifyPayments.amount_paid / 100;
 
         // Todo: - set comission amount
-        await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
+        const _referralCode = Order?.referralCode;
+        if (_referralCode) {
+            await API_REQ(_referralCode, USER_ID, Order._id, totalAmount);
+        }
 
         // redirect user location so he can download order Invoice
         const secret = config.SECRET;

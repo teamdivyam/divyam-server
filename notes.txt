@@ -1,0 +1,61 @@
+mongodb://127.0.0.1:27017/divyamBackend?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.4.2&replicaSet=rs0
+
+DB_URL=mongodb://{IP_ADDRESS}/divyamBackend?replicaSet=rs0
+
+username:mahtabbhai420 password:z2BlJLja6pjePUfv
+
+
+mongodb://{IP_ADDRESS}/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.4.2
+
+
+docker run -d --name mongo-express \
+ --network mongo-network \
+ -p 8081:8081 \
+ -e ME_CONFIG_MONGODB_ADMINUSERNAME=root \
+ -e ME_CONFIG_MONGODB_ADMINPASSWORD=yourpassword \
+ -e ME_CONFIG_MONGODB_SERVER=mongodb \
+ -e ME_CONFIG_MONGODB_PORT=27017 \
+ -e ME_CONFIG_BASICAUTH_USERNAME=admin \
+ -e ME_CONFIG_BASICAUTH_PASSWORD=adminpassword \
+ -e ME_CONFIG_MONGODB_ENABLE_ADMIN=true \
+ -e ME_CONFIG_MONGODB_AUTH_DATABASE=admin \
+ -e ME_CONFIG_MONGODB_REPLSET=rs0 \  
+ CONTAINER_ID
+
+/**
+MONGO_EXPRESS
+**/
+
+
+ docker run -d --name mongo-express \
+ --network mongo-net \
+ -p 8081:8081 \
+ -e ME_CONFIG_MONGODB_ADMINUSERNAME=root \
+ -e ME_CONFIG_MONGODB_ADMINPASSWORD=yourpassword \
+ -e ME_CONFIG_MONGODB_SERVER=mongodb \
+ -e ME_CONFIG_MONGODB_PORT=27017 \
+ -e ME_CONFIG_BASICAUTH_USERNAME=admin \
+ -e ME_CONFIG_BASICAUTH_PASSWORD=adminpassword \
+ -e ME_CONFIG_MONGODB_ENABLE_ADMIN=true \
+ -e ME_CONFIG_MONGODB_AUTH_DATABASE=admin \
+ -e ME_CONFIG_MONGODB_REPLSET=rs0 \
+ mongo-express
+
+
+
+/**
+BITNAMI_MONGODB
+**/
+
+    
+docker run -d \
+  --name mongodb \
+  --network mongo-net \
+  -e MONGODB_REPLICA_SET_MODE=primary \
+  -e MONGODB_REPLICA_SET_NAME=rs0 \
+  -e MONGODB_ADVERTISED_HOSTNAME=mongodb \
+  -e ALLOW_EMPTY_PASSWORD=yes \
+  -v mongodb_data:/bitnami/mongodb \
+  -p 27017:27017 \
+   --restart unless-stopped \
+  bitnami/mongodb:latest

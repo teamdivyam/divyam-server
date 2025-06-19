@@ -8,3 +8,4 @@ node_modules/
 .prod.env
 .TestlambdaFunction.js
 .sleep.js
+.DS_Store
