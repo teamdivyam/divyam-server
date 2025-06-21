@@ -17,7 +17,6 @@ import {
     VERIFY_OTP,
     WHOAMI
 } from "../Users/userController.js";
-
 import {
     DOWNLOAD_INVOICE,
     GET_ALL_ORDERS_BY_USER_ID,
@@ -31,7 +30,6 @@ import {
 
 import {
     GET_ALL_FEATURED_PACKAGE,
-    GET_ALL_PACKAGE,
     GET_ALL_PACKAGE_FOR_USERS,
     GET_SINGLE_PACKAGE_FOR_USERS
 } from "../Package/PackageController.js";

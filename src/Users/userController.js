@@ -464,6 +464,12 @@ const ADD_NEW_ADDRESS = async (req, res, next) => {
             return next(createHttpError(error?.details[0].message));
         }
 
+        const isAddressLengthGreaterThanTen = await userModel.findById(USER_ID);
+
+        if (isAddressLengthGreaterThanTen?.orderAddress?.length >= 10) {
+            return next(createHttpError(400, "Limit reached Remove an address to add a new one"));
+        }
+
         const Insert_New_Address = await userModel.findById(USER_ID);
 
         Insert_New_Address.orderAddress.push({

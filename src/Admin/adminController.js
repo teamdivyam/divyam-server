@@ -492,19 +492,68 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
 // { month: "January", order: 186, user: 102 },
 const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
     try {
+        let startDate = moment().subtract(5, "months").startOf("month").toDate();
+        let endDate = moment().endOf("month").toDate();
 
-        const orders = await orderModel.find().countDocuments({ orderStatus: "Delivered" });
-        // // const users = await userModel.find().countDocuments();
+        startDate += 5;
+        endDate += 5;
 
-        // const getMonths = moment(Order?.createdAt).getMonths();
+        const queryStartdate = new Date(startDate);
+        const queryEndDate = new Date(endDate);
 
-        return res.status(200).json({
-            success: true,
-            "getMonths": orders
-        })
+        const orders = await orderModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: queryStartdate, $lte: queryEndDate },
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" }
+                    },
+                    orderCount: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const users = await userModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: queryStartdate, $lte: queryEndDate },
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    userCount: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Step 4: Prepare data for all 12 months
+        const months = [
+            "January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December"
+        ];
+
+        const chartData = months.map((month, index) => {
+            const orderData = orders.find(item => item._id === index + 1);
+            const userData = users.find(item => item._id === index + 1);
+
+            return {
+                month,
+                order: orderData ? orderData.orderCount : 0,
+                user: userData ? userData.userCount : 0,
+            };
+        });
+
+        return res.status(200).json({ chartData });
 
     } catch (error) {
-        return next(createHttpError(400, "Internal error"))
+        next(createHttpError(400, "Internal error"))
     }
 }
 

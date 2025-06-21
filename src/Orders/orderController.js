@@ -474,8 +474,6 @@ const API_REQ = async (referralCode, userId, orderId, amount) => {
     } catch (error) {
         console.log(`Something off ${error.message}`);
     }
-
-
 }
 
 
@@ -483,6 +481,7 @@ const verifyPayments = async (req, res, next) => {
     const USER_ID = req.user.id;
     try {
         const { razorpay_signature, razorpay_order_id, razorpay_payment_id, referralCode } = req.body;
+
         // Validate required parameters
         if (!razorpay_signature || !razorpay_order_id || !razorpay_payment_id) {
             return next(createHttpError(400, "Missing required payment parameters"));
@@ -500,7 +499,6 @@ const verifyPayments = async (req, res, next) => {
         }
 
         const rzrVerifyPayments = await instance.orders.fetch(razorpay_order_id);
-        console.log("VERIFY_API", rzrVerifyPayments);
 
         if (rzrVerifyPayments?.status !== 'paid') {
             return next(createHttpError(400, "Payment not completed"));
@@ -512,7 +510,12 @@ const verifyPayments = async (req, res, next) => {
             return next(createHttpError(404, "Order not found"));
         }
 
-        // Order.payment.status = rzrVerifyPayments.status;
+        // original package price
+        const totalAmount = rzrVerifyPayments.amount_paid / 100;
+        // const finalProductPrice = isOrderReferralCodeValid === true ? discountPrice : totalAmount;
+
+
+
         const rzrPaygatewayKeyandSignature = {
             razorpay_signature,
             razorpay_payment_id
@@ -521,14 +524,36 @@ const verifyPayments = async (req, res, next) => {
         Order.gateway = rzrPaygatewayKeyandSignature;
         await Order.save();
 
-        // call Referral API
-        const totalAmount = rzrVerifyPayments.amount_paid / 100;
 
-        // Todo: - set comission amount
-        const _referralCode = Order?.referralCode;
-        if (_referralCode) {
-            await API_REQ(_referralCode, USER_ID, Order._id, totalAmount);
+
+
+        /**
+         * HANDLE_REFERRAL_REWARD
+         */
+
+        const OriginalPackagePrice = Order.product?.price;
+        const isReferralCode = Order?.referralCode;
+        var isOrderReferralCodeValid;
+
+        if (isReferralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+            // product Discount
+            const percentage = 15;
+            const discountPrice = OriginalPackagePrice - (OriginalPackagePrice * percentage) / 100;
+
+            // referralReward
+            const referralRewardComission = 5;
+            const referralReward = (discountPrice * referralRewardComission) / 100;
+
+            await API_REQ(isReferralCode, USER_ID, Order._id, referralReward);
+
+            console.log(`
+            ReferralRewad : ${referralReward}, productDiscount : ${discountPrice}`);
+
         }
+
+
+
 
         // redirect user location so he can download order Invoice
         const secret = config.SECRET;
