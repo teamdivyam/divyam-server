@@ -1,11 +1,10 @@
 import { config } from 'dotenv'
-config()
-
+config();
 const _config = {
     FRONTEND_URL: process.env.FRONT_END_URL,
     BACKEND_URL: process.env.NODE_ENV === "development"
         ? `http://localhost:${process.env.APP_PORT}` : `https://api.divyam.com`,
-    ADMIN_DASHBOARD_URL: process.env.ADMIN_DASHBORAD_URL,
+    ADMIN_DASHBOARD_URL: process.env.NODE_ENV === "development" ? `http://localhost:5173` : `https://admin.divyam.com`,
     PRODUCTION: process.env.PRODUCTION,
     APP_PORT: process.env.APP_PORT,
     DB_URL: process.env.DB_URL,
@@ -35,7 +34,13 @@ const _config = {
     ORGIN2: process.env.ORIGIN2,
     ORGIN3: process.env.ORIGIN3,
     NODE_ENV: process.env.NODE_ENV,
-    SECRET: process.env.SECRET
+    SECRET: process.env.SECRET,
+    // smtp_Config
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASSWORD,
+    RESET_PASSWORD_SECRET: process.env.RESET_PASSWORD_SECRET
 }
 
 export { _config as config }

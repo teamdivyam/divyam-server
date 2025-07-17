@@ -2,6 +2,8 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import {
     ADMIN_DASHBOARD_ANALYTICS,
+    ADMIN_RESET_PASSWORD,
+    ADMIN_RESET_PASSWORD_URL_CREATE,
     CHANGE_ADMIN_PASSWORD,
     DELETE_SINGLE_USERS,
     GET_ALL_USERS,
@@ -10,6 +12,7 @@ import {
     GET_SINGLE_USERS,
     LoginAdmin,
     RegisterAdmin,
+    RESET_PASSWORD_VERIFY,
     SEARCH_AGENTS,
     SEARCH_ORDERS,
     SEARCH_USERS,
@@ -81,6 +84,11 @@ const LIMIT_ADMIN_LOGIN = rateLimit({
 // Routes For Admin..
 AdminRoute.post('/register', Upload.single('avatar'), RegisterAdmin);
 AdminRoute.post('/login', LIMIT_ADMIN_LOGIN, LoginAdmin);
+
+// ADMIN_RESET_PASSWORD
+AdminRoute.post('/set-password', LIMIT_ADMIN_LOGIN, ADMIN_RESET_PASSWORD);
+AdminRoute.post('/reset-password', LIMIT_ADMIN_LOGIN, ADMIN_RESET_PASSWORD_URL_CREATE);
+AdminRoute.get('/verify-reset-password/:Hash', LIMIT_ADMIN_LOGIN, RESET_PASSWORD_VERIFY)
 
 // AUTH ADMIN THEN PROCEED FOR THE NEXT TASK..
 // ANALYTICS

@@ -339,7 +339,6 @@ const VERIFY_OTP = async (req, res, next) => {
         const token = jwt.sign({ id: user._id, role: user.role }, config.USER_SECRET,
             { expiresIn: "7d" });
 
-        user.accessToken = token;
         // validate otp in the OTP_DB for validation
         Otp.isVerified = true;
         await Otp.save()

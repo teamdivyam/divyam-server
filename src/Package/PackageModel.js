@@ -1,6 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import slugify from "slugify";
 
+
+
 const PackageSchema = new Schema({
     pkg_id: { type: String, unique: true, required: true },
     name: { type: String, required: true, unique: true, },
@@ -33,7 +35,10 @@ const PackageSchema = new Schema({
     },
 
     isFeatured: { type: Boolean, default: false },
-
+    discount: {
+        isDiscount: { type: Boolean, default: false },
+        disCountPercentForReferralOrder: { type: Boolean, default: null }
+    },
     rating: {
         type: Number,
         required: true

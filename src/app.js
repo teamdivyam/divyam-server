@@ -70,14 +70,10 @@ app.get('/health', (req, res, next) => {
     )
 });
 
-
-
-// SETUP_RATE_LIMITER
-
-
+// RATE_LIMITER
 const singleLimiter = rateLimit({
     windowMs: 60000 * 2,// 2 minutes
-    max: 50, //5 Request.
+    limit: 50,
     message: 'Too many requests Please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -94,7 +90,6 @@ app.get('/rate', singleLimiter, async (req, res, next) => {
         })
 });
 
-
 app.get('/ip', async (req, res, next) => {
     try {
         return res.status(200).json({
@@ -105,7 +100,6 @@ app.get('/ip', async (req, res, next) => {
         throw new Error(error)
     }
 })
-
 
 // for-undeclared-routes
 app.use(function (req, res, next) {
@@ -119,9 +113,6 @@ app.use(function (req, res, next) {
 // global Error handler middleware
 app.use(globalErrorHandler);
 export default app
-
-
-
 
 
 

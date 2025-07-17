@@ -23,7 +23,8 @@ import getPreSignedURL from "../services/getPreSignedUrl.js";
 import Order from "../Orders/orderModel.js";
 import moment from "moment";
 import logger from "../logger/index.js";
-import { populate } from "dotenv";
+import SEND_EMAIL from "../../services/email/index.js";
+import { resetPasswordHtmlEmailTemplate } from "../../services/email/templates/reset.js";
 
 const RegisterAdmin = async (req, res, next) => {
 
@@ -123,10 +124,7 @@ const LoginAdmin = async (req, res, next) => {
             return next(createHttpError(401, "Please Register Your account or check Your email address."))
         }
 
-        // Check for Admin Email..
-        // if (isAdmin.email !== reqData.email) {
-        //     return next(createHttpError(401, "Please enter correct email address..."))
-        // }
+
 
         const decodedPassword = await bcrypt.compare(reqData.password, isAdmin.password);
 
@@ -155,11 +153,126 @@ const LoginAdmin = async (req, res, next) => {
 
     } catch (error) {
         logger.error(`${error}, Error msg ${error.message}`)
-        return next(createHttpError(401, `log from Admin Login ${error}`))
+        return next(createHttpError(404, `${error}`))
     }
 
 }
 
+const RESET_PASSWORD_VERIFY = async (req, res, next) => {
+    try {
+        const hash = req.params.Hash;
+        const secret = config.RESET_PASSWORD_SECRET;
+        const isValidHash = jwt.verify(hash, secret);
+
+        if (!isValidHash) {
+            return next(createHttpError(400, "Inavlid request"))
+        }
+
+        // on success
+        return res.json({
+            success: true,
+            msg: "Successfully verified",
+        });
+
+    } catch (error) {
+        if (error instanceof TokenExpiredError) {
+            return next(createHttpError(400, "Invalid request please try again later"))
+        }
+        return next(createHttpError(400, `Internal Error | ${error.message}`))
+    }
+}
+
+
+const ADMIN_RESET_PASSWORD = async (req, res, next) => {
+    try {
+        const { hash, password } = req.body;
+
+        const Secret = config.RESET_PASSWORD_SECRET;
+        const isValidHash = jwt.verify(hash, Secret);
+
+        if (!isValidHash) {
+            return next(createHttpError(400, "Internal Error"))
+        }
+
+        if (isValidHash.type !== "reset-password") {
+            return next(createHttpError(400, "Internal Error"))
+        }
+
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        const admin = await adminModel.findOne({ email: isValidHash?.email });
+        admin.password = hashPassword;
+        await admin.save();
+
+        if (!admin) {
+            return next(createHttpError(400, "Internal error"))
+        }
+
+        return res.json(
+            {
+                success: true,
+                msg: "Password has been chnaged successfully"
+            }
+        )
+
+    } catch (error) {
+        if (error instanceof TokenExpiredError) {
+            return next(createHttpError(400, "Invalid requests.."))
+        }
+
+        return next(createHttpError(400, `Internal Error | ${error.message}`))
+    }
+}
+
+
+const ADMIN_RESET_PASSWORD_URL_CREATE = async (req, res, next) => {
+    try {
+
+        const { email } = req.body;
+        const Admin = await adminModel.findOne({
+            email: email
+        })
+
+        if (!Admin) {
+            return next(createHttpError(400, "Please try again later"))
+        }
+
+        // get admin email adress
+        const isAdminEmail = Admin?.email;
+        if (!isAdminEmail) {
+            return next(createHttpError(400, "Please try again later."))
+        }
+
+        // on Success
+        const partialEmail = isAdminEmail.replace(/(\w{3})[\w.-]+@([\w.]+\w)/, "$1***@$2");
+
+        const payload = { email: isAdminEmail, type: "reset-password" };
+        const Secret = config?.RESET_PASSWORD_SECRET;
+        const hash = jwt.sign(payload, Secret, { expiresIn: "5m" });
+
+        const resetPasswordLink = `${config.ADMIN_DASHBOARD_URL}/reset-password?hash=${hash}`;
+
+        // send Reset password link
+        const emailType = "RESET_ADMIN_PASSWORD";
+        const to = isAdminEmail;
+        const subject = "🔑 Divyam Account - Password Reset Instructions";
+        const emailHtmlBody = resetPasswordHtmlEmailTemplate(resetPasswordLink);
+        const emailTextBody = resetPasswordLink;
+        const sendIt = await SEND_EMAIL(emailType, to, subject, emailHtmlBody, emailTextBody);
+
+        console.log(sendIt);
+
+        return res.json({
+            success: true,
+            statusCode: 200,
+            adminEmail: partialEmail,
+            msg: "Email has been sent to registered email address"
+        });
+
+    } catch (error) {
+        return next(createHttpError(400, `Internal Error:${error?.message}`))
+    }
+}
 
 const GET_ALL_USERS = async (req, res, next) => {
     try {
@@ -685,6 +798,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
 }
 
 export {
+    RESET_PASSWORD_VERIFY,
     RegisterAdmin,
     LoginAdmin,
     GET_ALL_USERS,
@@ -698,5 +812,7 @@ export {
     GET_PRESIGNED_URL,
     ADMIN_DASHBOARD_ANALYTICS,
     VIEW_SINGLE_ORDER_ADMIN,
-    GET_ORDER_DETAILS
+    GET_ORDER_DETAILS,
+    ADMIN_RESET_PASSWORD_URL_CREATE,
+    ADMIN_RESET_PASSWORD
 }

@@ -128,7 +128,8 @@ const UPDATE_PACKAGE = async (req, res, next) => {
         productImgs = [],
         rating,
         isFeaturedProduct,
-        isVisible
+        isVisible,
+        discount
     } = req.body;
 
     try {
@@ -188,8 +189,20 @@ const UPDATE_PACKAGE = async (req, res, next) => {
         const bannerImgArr = bannerImageDocs.map((doc) => doc._id);
         const productImgArr = productImageDocs.map((doc) => doc._id);
 
+
+        // set discount
+        let discount = {
+            isDiscount: false,
+        };
+        // { isDiscount, disCountPercentForReferralOrder }
+
+        if (discount) {
+            discount.isDiscount = true;
+            discount.disCountPercentForReferralOrder = discount;
+        }
+
         // Update Package
-        const UPDATED_PACKAGE = await PackageModel.findOneAndUpdate(
+        const UPDATE_PACKAGE = await PackageModel.findOneAndUpdate(
             {
                 slug: SLUG,
                 isDeleted: { $eq: false }
@@ -206,11 +219,11 @@ const UPDATE_PACKAGE = async (req, res, next) => {
                 productBannerImgs: bannerImgArr,
                 isFeatured: isFeaturedProduct,
                 isVisible,
+                discount
             }
         );
 
-
-        if (!UPDATED_PACKAGE) {
+        if (!UPDATE_PACKAGE) {
             return next(createHttpError(400, "Something went wrong, please try again later."));
         }
 

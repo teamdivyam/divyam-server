@@ -548,7 +548,7 @@ const verifyPayments = async (req, res, next) => {
             await API_REQ(isReferralCode, USER_ID, Order._id, referralReward);
 
             console.log(`
-            ReferralRewad : ${referralReward}, productDiscount : ${discountPrice}`);
+            ReferralReward : ${referralReward}, productDiscount : ${discountPrice}`);
 
         }
 

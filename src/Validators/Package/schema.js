@@ -25,7 +25,8 @@ const UPDATE__PKG__VALIDATE_SCHEMA = Joi.object({
     productImgs: Joi.array(),
     isFeaturedProduct: Joi.boolean().required(),
     isVisible: Joi.boolean().required(),
-    rating: Joi.number().required()
+    rating: Joi.number().required(),
+    discount: Joi.number()
 });
 
 
