@@ -23,7 +23,8 @@ import getPreSignedURL from "../services/getPreSignedUrl.js";
 import Order from "../Orders/orderModel.js";
 import moment from "moment";
 import logger from "../logger/index.js";
-import { populate } from "dotenv";
+import SEND_EMAIL from "../../services/email/index.js";
+import { resetPasswordHtmlEmailTemplate } from "../../services/email/templates/reset.js";
 
 const RegisterAdmin = async (req, res, next) => {
 
@@ -123,10 +124,7 @@ const LoginAdmin = async (req, res, next) => {
             return next(createHttpError(401, "Please Register Your account or check Your email address."))
         }
 
-        // Check for Admin Email..
-        // if (isAdmin.email !== reqData.email) {
-        //     return next(createHttpError(401, "Please enter correct email address..."))
-        // }
+
 
         const decodedPassword = await bcrypt.compare(reqData.password, isAdmin.password);
 
@@ -155,11 +153,126 @@ const LoginAdmin = async (req, res, next) => {
 
     } catch (error) {
         logger.error(`${error}, Error msg ${error.message}`)
-        return next(createHttpError(401, `log from Admin Login ${error}`))
+        return next(createHttpError(404, `${error}`))
     }
 
 }
 
+const RESET_PASSWORD_VERIFY = async (req, res, next) => {
+    try {
+        const hash = req.params.Hash;
+        const secret = config.RESET_PASSWORD_SECRET;
+        const isValidHash = jwt.verify(hash, secret);
+
+        if (!isValidHash) {
+            return next(createHttpError(400, "Inavlid request"))
+        }
+
+        // on success
+        return res.json({
+            success: true,
+            msg: "Successfully verified",
+        });
+
+    } catch (error) {
+        if (error instanceof TokenExpiredError) {
+            return next(createHttpError(400, "Invalid request please try again later"))
+        }
+        return next(createHttpError(400, `Internal Error | ${error.message}`))
+    }
+}
+
+
+const ADMIN_RESET_PASSWORD = async (req, res, next) => {
+    try {
+        const { hash, password } = req.body;
+
+        const Secret = config.RESET_PASSWORD_SECRET;
+        const isValidHash = jwt.verify(hash, Secret);
+
+        if (!isValidHash) {
+            return next(createHttpError(400, "Internal Error"))
+        }
+
+        if (isValidHash.type !== "reset-password") {
+            return next(createHttpError(400, "Internal Error"))
+        }
+
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        const admin = await adminModel.findOne({ email: isValidHash?.email });
+        admin.password = hashPassword;
+        await admin.save();
+
+        if (!admin) {
+            return next(createHttpError(400, "Internal error"))
+        }
+
+        return res.json(
+            {
+                success: true,
+                msg: "Password has been chnaged successfully"
+            }
+        )
+
+    } catch (error) {
+        if (error instanceof TokenExpiredError) {
+            return next(createHttpError(400, "Invalid requests.."))
+        }
+
+        return next(createHttpError(400, `Internal Error | ${error.message}`))
+    }
+}
+
+
+const ADMIN_RESET_PASSWORD_URL_CREATE = async (req, res, next) => {
+    try {
+
+        const { email } = req.body;
+        const Admin = await adminModel.findOne({
+            email: email
+        })
+
+        if (!Admin) {
+            return next(createHttpError(400, "Please try again later"))
+        }
+
+        // get admin email adress
+        const isAdminEmail = Admin?.email;
+        if (!isAdminEmail) {
+            return next(createHttpError(400, "Please try again later."))
+        }
+
+        // on Success
+        const partialEmail = isAdminEmail.replace(/(\w{3})[\w.-]+@([\w.]+\w)/, "$1***@$2");
+
+        const payload = { email: isAdminEmail, type: "reset-password" };
+        const Secret = config?.RESET_PASSWORD_SECRET;
+        const hash = jwt.sign(payload, Secret, { expiresIn: "5m" });
+
+        const resetPasswordLink = `${config.ADMIN_DASHBOARD_URL}/reset-password?hash=${hash}`;
+
+        // send Reset password link
+        const emailType = "RESET_ADMIN_PASSWORD";
+        const to = isAdminEmail;
+        const subject = "🔑 Divyam Account - Password Reset Instructions";
+        const emailHtmlBody = resetPasswordHtmlEmailTemplate(resetPasswordLink);
+        const emailTextBody = resetPasswordLink;
+        const sendIt = await SEND_EMAIL(emailType, to, subject, emailHtmlBody, emailTextBody);
+
+        console.log(sendIt);
+
+        return res.json({
+            success: true,
+            statusCode: 200,
+            adminEmail: partialEmail,
+            msg: "Email has been sent to registered email address"
+        });
+
+    } catch (error) {
+        return next(createHttpError(400, `Internal Error:${error?.message}`))
+    }
+}
 
 const GET_ALL_USERS = async (req, res, next) => {
     try {
@@ -489,32 +602,71 @@ const GET_PRESIGNED_URL = async (req, res, next) => {
     }
 }
 
+// { month: "January", order: 186, user: 102 },
 const ADMIN_DASHBOARD_ANALYTICS = async (req, res, next) => {
     try {
-        // get-user-info
-        // get-order-info
-        const fetchOrder = await orderModel.find({}, { _id: 0 });
+        let startDate = moment().subtract(5, "months").startOf("month").toDate();
+        let endDate = moment().endOf("month").toDate();
 
-        // on error
-        if (!fetchOrder || !fetchOrder.length) {
-            return next(createHttpError(400, "Something went wrong"))
-        }
+        startDate += 5;
+        endDate += 5;
 
+        const queryStartdate = new Date(startDate);
+        const queryEndDate = new Date(endDate);
 
-        const fetchUsers = await userModel.find();
+        const orders = await orderModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: queryStartdate, $lte: queryEndDate },
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" }
+                    },
+                    orderCount: { $sum: 1 }
+                }
+            }
+        ]);
 
-        // on error
-        if (!fetchUsers || !fetchUsers) {
-            return next(createHttpError(400, "Something went wrong"))
-        }
+        const users = await userModel.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: queryStartdate, $lte: queryEndDate },
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    userCount: { $sum: 1 }
+                }
+            }
+        ]);
 
-        return res.json({
-            Orders: fetchOrder.length,
-            Users: fetchUsers.length
-        })
+        // Step 4: Prepare data for all 12 months
+        const months = [
+            "January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December"
+        ];
+
+        const chartData = months.map((month, index) => {
+            const orderData = orders.find(item => item._id === index + 1);
+            const userData = users.find(item => item._id === index + 1);
+
+            return {
+                month,
+                order: orderData ? orderData.orderCount : 0,
+                user: userData ? userData.userCount : 0,
+            };
+        });
+
+        return res.status(200).json({ chartData });
 
     } catch (error) {
-        return next(createHttpError(400, "Internal error"))
+        next(createHttpError(400, "Internal error"))
     }
 }
 
@@ -598,14 +750,14 @@ const VIEW_SINGLE_ORDER_ADMIN = async (req, res, next) => {
 // Only for internal Communication
 const GET_ORDER_DETAILS = async (req, res, next) => {
     try {
-        console.log("hii");
         const { orderId } = req.body;
         const Order = await orderModel.findOne({ orderId }, { __v: 0, notes: 0 }).populate({
             path: "product",
             populate: {
                 path: 'productId',
                 model: "Package",
-                select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 }
+                select: { _id: 0, isVisible: 0, packageListTextItems: 0, productImg: 0, productBannerImgs: 0, __v: 0, createdAt: 0, updatedAt: 0, policy: 0, notes: 0 },
+                options: { strictPopulate: false }
             }
         })
             .populate({
@@ -630,12 +782,14 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
             return next(createHttpError(400, "Internal Error | can't fetch order details "))
         }
 
-        const orderCompletedAt = moment(Order?.transaction?.completedAt).format("MM/DD/YYYY HH:mm:ss")
+        const momentFormatDate = moment(Order?.transaction?.completedAt).format("DD/MM/YYYY HH:MM:SS");
+
+        const formattedOrderdate = momentFormatDate - 5.30;
 
         return res.status(200).json({
             success: true,
             Order,
-            orderCompletedAt
+            orderCompletedAt: formattedOrderdate
         });
 
     } catch (error) {
@@ -644,6 +798,7 @@ const GET_ORDER_DETAILS = async (req, res, next) => {
 }
 
 export {
+    RESET_PASSWORD_VERIFY,
     RegisterAdmin,
     LoginAdmin,
     GET_ALL_USERS,
@@ -657,5 +812,7 @@ export {
     GET_PRESIGNED_URL,
     ADMIN_DASHBOARD_ANALYTICS,
     VIEW_SINGLE_ORDER_ADMIN,
-    GET_ORDER_DETAILS
+    GET_ORDER_DETAILS,
+    ADMIN_RESET_PASSWORD_URL_CREATE,
+    ADMIN_RESET_PASSWORD
 }

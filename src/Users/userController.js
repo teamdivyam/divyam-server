@@ -249,9 +249,26 @@ const WHOAMI = async (req, res, next) => {
 
         const user = await userModel.findById(USER_ID).lean();
 
+
+
         if (!user) {
             return next(createHttpError(400, "Something went wrong"))
         }
+
+        // on success
+
+        const deviceIdInHeader = req?.headers['x-device-id'] || null;
+        console.log(deviceIdInHeader);
+
+        // let deviceId;
+        // if (deviceIdInHeader === null) {
+        //     // create fesh device id 
+        //     (async () => {
+        //         deviceId = nanoid(20)
+        //     })()
+        // }
+        // // use old one as a device id
+        // deviceId = deviceIdInHeader
 
         // on-Success
         return res.status(200).json(
@@ -322,7 +339,6 @@ const VERIFY_OTP = async (req, res, next) => {
         const token = jwt.sign({ id: user._id, role: user.role }, config.USER_SECRET,
             { expiresIn: "7d" });
 
-        user.accessToken = token;
         // validate otp in the OTP_DB for validation
         Otp.isVerified = true;
         await Otp.save()
@@ -341,6 +357,7 @@ const VERIFY_OTP = async (req, res, next) => {
         res.cookie('token', token, COOKIES_CONFIG);
 
         return res.status(200).json({
+            id: user?._id,
             success: "true",
             msg: "OTP verified successfully",
         });
@@ -380,7 +397,7 @@ const GUEST_USER = async (req, res, next) => {
                 (browser.os.name === 'macOS' || browser.os.name === 'Windows' || browser.os.name === 'Linux'),
         }
 
-        console.log("USER_AGENT", userInfo);
+
         const session_ID = await jwt.sign(
             userInfo,
             config.GUEST_USERS_SECRET,
@@ -403,6 +420,7 @@ const GUEST_USER = async (req, res, next) => {
 
         return res.status(200).json(
             {
+                deviceId: nanoid(20),
                 success: true,
                 status: 200,
             }
@@ -443,6 +461,12 @@ const ADD_NEW_ADDRESS = async (req, res, next) => {
 
         if (error) {
             return next(createHttpError(error?.details[0].message));
+        }
+
+        const isAddressLengthGreaterThanTen = await userModel.findById(USER_ID);
+
+        if (isAddressLengthGreaterThanTen?.orderAddress?.length >= 10) {
+            return next(createHttpError(400, "Limit reached Remove an address to add a new one"));
         }
 
         const Insert_New_Address = await userModel.findById(USER_ID);

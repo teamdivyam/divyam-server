@@ -38,5 +38,3 @@ virtualImagePath.get(function () {
 const productImgModel = mongoose.model('productsimg', productImgSchema);
 
 export default productImgModel;
-
-

@@ -4,7 +4,7 @@ import crypto, { createVerify } from "crypto"
 import PackageModel from "../Package/PackageModel.js";
 import userModel from '../Users/userModel.js';
 import Razorpay from "razorpay";
-import mongoose from "mongoose";
+import mongoose, { startSession } from "mongoose";
 import OrderModel from "./orderModel.js";
 import generateOrderID from "../Counter/counterController.js";
 import AreaZoneModel from "../AreaZone/areaZoneModel.js";
@@ -28,6 +28,7 @@ import {
 import TransactionModel from "./transactionModel.js";
 import logger from "../logger/index.js";
 import { invokeLambda } from "./Hooks/handleSuccessPayment.js";
+import { isReferralCodeValid } from "../utils/isReferralCodeValid.js";
 
 
 var instance = new Razorpay({
@@ -42,11 +43,10 @@ const encryptStr = (string, secret) => {
 }
 
 
-// Create Orders
+// Place NEW ORDER
 const NEW_ORDER = async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
     try {
         const USER_ID = req.user.id;
 
@@ -61,11 +61,14 @@ const NEW_ORDER = async (req, res, next) => {
         }
         const { packageID, qty, startDate, endDate, referralCode, } = req.body;
 
-
         const startBookingDate = new Date(startDate);
-        //  new Date(startDate)
         const endBookingDate = new Date(endDate)
         const productQuantity = qty || 1;
+
+
+
+        // check
+
         const isUserAvailable = await userModel.findById(USER_ID);
 
         if (!isUserAvailable) {
@@ -131,10 +134,30 @@ const NEW_ORDER = async (req, res, next) => {
         //     )
         // }
         // calc price included referral code
-        const totalAmount = Package.price * productQuantity;
-        // console.log("LOG_5.1");
+
+
+
+
+        const normalProductPrice = Package.price * productQuantity;
+        if (normalProductPrice <= 0 || !normalProductPrice || normalProductPrice == null) {
+            return next(createHttpError(500, "Internal server error"))
+        }
+
+        // check referralCode is valid 
+        let isOrderReferralCodeValid;
+
+        if (referralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+        }
+
+        const comissionPercentage = 15;
+        const discount = (normalProductPrice * comissionPercentage) / 100;
+        const disCountPrice = normalProductPrice - discount;
+
+        const finalProductPrice = isOrderReferralCodeValid === true ? disCountPrice : normalProductPrice;
+
         const razorpayOrder = await instance.orders.create({
-            amount: totalAmount * 100,
+            amount: finalProductPrice * 100,
             currency: "INR",
             receipt: `order_${new Date().getTime()}`,
         });
@@ -145,10 +168,7 @@ const NEW_ORDER = async (req, res, next) => {
             return next(createHttpError(500, "Payment gateway error"));
         }
 
-        // console.log("LOG_6");
-
-        // console.log("LOG_6.1");
-
+        console.log("COMPLETE_PRODUCT_PRICE", "BEFORE", Package.price, "AFTER", finalProductPrice);
         const createOrder = new OrderModel(
             {
                 orderId: razorpayOrder.id,
@@ -156,13 +176,13 @@ const NEW_ORDER = async (req, res, next) => {
                 product: {
                     productId: Package._id,
                     quantity: productQuantity,
-                    price: totalAmount
+                    price: Package.price
                 },
-                totalAmount: totalAmount
+                referralCode: referralCode,
+                totalAmount: finalProductPrice
             }
         );
 
-        // console.log("LOG_6.2");
 
         if (!createOrder) {
             await session.abortTransaction();
@@ -192,9 +212,7 @@ const NEW_ORDER = async (req, res, next) => {
         if (!NEW_BOOKING) {
             await session.abortTransaction();
             return next(createHttpError(400, "Oops eomthing went wrong, please try agaian later."))
-
         }
-
         createOrder.booking = NEW_BOOKING[0]._id;
         await createOrder.save({ session });
 
@@ -205,7 +223,7 @@ const NEW_ORDER = async (req, res, next) => {
                     user: USER_ID,
                     order: createOrder._id,
                     gatewayOrderId: razorpayOrder.id,
-                    amount: totalAmount,
+                    amount: finalProductPrice,
                     status: "processing"
                 }
             ],
@@ -218,11 +236,12 @@ const NEW_ORDER = async (req, res, next) => {
         }
 
         await session.commitTransaction();
+
         return res.status(201).json({
             status: 201,
             message: "Order created successfully",
             orderId: razorpayOrder.id,
-            amount: totalAmount,
+            amount: finalProductPrice,
             notes //options-used in frontend
         });
 
@@ -238,12 +257,204 @@ const NEW_ORDER = async (req, res, next) => {
 };
 
 
+// GET_NEW_ORDERS
+const NEW_ORDER_V2 = async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    const USER_ID = req.user.id || null;
+
+    try {
+        const { error, value } = VALIATE_ORDER_BODY_SCHEMA.validate(req.body);
+
+        if (error) {
+            await session.abortTransaction();
+            return next(createHttpError(400, error?.details[0].message))
+        }
+        const { packageID, qty, startDate, endDate, referralCode, } = req.body;
+
+        const startBookingDate = new Date(startDate);
+        const endBookingDate = new Date(endDate);
+        const productQuantity = qty || 1;
+
+        // Check User and his shipping address
+        const User = await userModel.findById(USER_ID);
+
+        if (!User) {
+            await session.abortTransaction()
+            return next(createHttpError(400, "Invalid Request"))
+        }
+
+        if (!User?.orderAddress) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "There is no address available for this order please add to procees"));
+        }
+
+        const shippingAddress = User?.orderAddress.filter((item, idx) => {
+            if (item.isActive) {
+                return item;
+            }
+        });
+
+        if (!shippingAddress.length) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "We need your complete address to proceed order"))
+        }
+
+        // chech-for-available-pinCode's
+        const isUserShippingPinCodeAvailable_IN_OUR_AREA_ZONE = await AreaZoneModel.findOne(
+            {
+                areaPinCode: shippingAddress[0].pinCode,
+                isAvailable: true
+            }
+        );
+
+        if (!isUserShippingPinCodeAvailable_IN_OUR_AREA_ZONE) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Our Services are not avaialable in your area"))
+        }
+
+        //  process order
+        const orderedItem = await PackageModel.findById(packageID).lean();
+
+        if (!orderedItem) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Invalid Request"))
+        }
+
+        const productCost = orderedItem.price;
+        const totalProductAmount = productCost * productQuantity || 0;
+
+        const razorpayOrder = await instance.orders.create({
+            amount: totalProductAmount * 100,
+            currency: "INR",
+            receipt: `order_${new Date().getTime()}`,
+        });
+
+        if (!razorpayOrder) {
+            await session.abortTransaction();
+            return next(createHttpError(500, "Payment gateway error"));
+        }
+
+        // verify referral Code
+        let isOrderReferralCodeValid;
+        if (referralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+        }
+
+        // calc commission and discount
+        const comissionPercentage = 15;
+        const discount = (totalProductAmount * 15) / 100;
+        const finalPrice = totalProductAmount = discount;
+
+        // create new order
+        const createOrder = new OrderModel(
+            {
+                orderId: razorpayOrder.id,
+                customer: USER_ID,
+                product: {
+                    productId: packageID,
+                    quantity: productQuantity,
+                    price: productCost
+                },
+                orderStatus: "Processing",
+                totalAmount: totalProductAmount
+            }
+        );
+
+        // check and abort transaction
+        if (!createOrder) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Failed to place order. Please try again."));
+        }
+
+        // CREATE_NEW_BOOKING
+        const NEW_BOOKING = await bookingModel.create(
+            [{
+                startDate: startBookingDate,
+                endDate: endBookingDate,
+                resourceId: packageID,
+                customerId: USER_ID,
+                orderId: createOrder._id,
+                address: {
+                    landMark: shippingAddress[0].landMark,
+                    city: shippingAddress[0].city,
+                    state: shippingAddress[0].state,
+                    contactNumber: User.mobileNum,
+                    pinCode: shippingAddress[0].pinCode,
+                    area: shippingAddress[0].area,
+                }
+            }],
+            { session }
+        );
+
+        if (!NEW_BOOKING) {
+            await session.abortTransaction();
+            return next(createHttpError(400, "Oops something went wrong, please try agaian later."))
+        }
+
+        // CREATE_TRANSACTION
+        const TRANSACTION = await TransactionModel.create(
+            [
+                {
+                    user: USER_ID,
+                    order: createOrder._id,
+                    gatewayOrderId: razorpayOrder.id,
+                    amount: totalProductAmount,
+                    status: "processing"
+                }
+            ],
+            { session: session }
+        );
+
+        if (!TRANSACTION) {
+            await sessabortTransaction()
+            return next(createHttpError(400, "Please Try again later-Internal Error"))
+        }
+
+        // save inside order
+        createOrder.booking = NEW_BOOKING[0]._id;
+        createOrder.transaction = TRANSACTION._id; //save transaction id inside order
+        await createOrder.save({ session });
+
+        // push Order inside User Account with status Processing
+        // razorpay webhook will auto verify and update the status  to Pending 
+
+        if (!User.orders.includes(createOrder._id)) {
+            // push new order in the user account
+            User.orders.push(createOrder._id);
+            await User.save();
+        }
+
+        const notes = {
+            fullName: User.fullName || null,
+            email: User.email || null,
+            contact: User.mobileNum || null
+        }
+
+        await session.commitTransaction();
+
+        return res.status(201).json({
+            status: 201,
+            message: "Order created successfully",
+            orderId: razorpayOrder.id,
+            amount: totalProductAmount,
+            notes //options-used in frontend
+        });
+
+        // createOrder
+    } catch (error) {
+        return next(createHttpError(400, `Internal error ${error}`))
+    }
+}
+
+
 /**
  * 
- * AFTER VERIFICATION OF SIGNATURE I PROCESS ORDERS
+ * AFTER VERIFICATION OF SIGNATURE PROCESS ORDERS,
  * NOTIFICATIONS AND OTHER QUEUE BASED SERVICES
  * 
  */
+
 const API_REQ = async (referralCode, userId, orderId, amount) => {
     const API = `https://api-referral.divyam.com/api/referral/create-referral-event?referralCode=${referralCode}&refereeId=${userId}&orderId=${orderId}&amount=${amount}`;
 
@@ -263,8 +474,6 @@ const API_REQ = async (referralCode, userId, orderId, amount) => {
     } catch (error) {
         console.log(`Something off ${error.message}`);
     }
-
-
 }
 
 
@@ -272,6 +481,7 @@ const verifyPayments = async (req, res, next) => {
     const USER_ID = req.user.id;
     try {
         const { razorpay_signature, razorpay_order_id, razorpay_payment_id, referralCode } = req.body;
+
         // Validate required parameters
         if (!razorpay_signature || !razorpay_order_id || !razorpay_payment_id) {
             return next(createHttpError(400, "Missing required payment parameters"));
@@ -289,9 +499,8 @@ const verifyPayments = async (req, res, next) => {
         }
 
         const rzrVerifyPayments = await instance.orders.fetch(razorpay_order_id);
-        console.log("VERIFY_API", rzrVerifyPayments);
 
-        if (rzrVerifyPayments.status !== 'paid') {
+        if (rzrVerifyPayments?.status !== 'paid') {
             return next(createHttpError(400, "Payment not completed"));
         }
 
@@ -301,7 +510,12 @@ const verifyPayments = async (req, res, next) => {
             return next(createHttpError(404, "Order not found"));
         }
 
-        // Order.payment.status = rzrVerifyPayments.status;
+        // original package price
+        const totalAmount = rzrVerifyPayments.amount_paid / 100;
+        // const finalProductPrice = isOrderReferralCodeValid === true ? discountPrice : totalAmount;
+
+
+
         const rzrPaygatewayKeyandSignature = {
             razorpay_signature,
             razorpay_payment_id
@@ -310,12 +524,36 @@ const verifyPayments = async (req, res, next) => {
         Order.gateway = rzrPaygatewayKeyandSignature;
         await Order.save();
 
-        // call Referral API
-        const totalAmount = rzrVerifyPayments.amount_paid / 100;
-        const userComission = (totalAmount * 5) / 100;
 
-        // Todo: - set comission amount
-        await API_REQ(referralCode, USER_ID, Order._id, totalAmount);
+
+
+        /**
+         * HANDLE_REFERRAL_REWARD
+         */
+
+        const OriginalPackagePrice = Order.product?.price;
+        const isReferralCode = Order?.referralCode;
+        var isOrderReferralCodeValid;
+
+        if (isReferralCode) {
+            isOrderReferralCodeValid = await isReferralCodeValid(referralCode);
+            // product Discount
+            const percentage = 15;
+            const discountPrice = OriginalPackagePrice - (OriginalPackagePrice * percentage) / 100;
+
+            // referralReward
+            const referralRewardComission = 5;
+            const referralReward = (discountPrice * referralRewardComission) / 100;
+
+            await API_REQ(isReferralCode, USER_ID, Order._id, referralReward);
+
+            console.log(`
+            ReferralReward : ${referralReward}, productDiscount : ${discountPrice}`);
+
+        }
+
+
+
 
         // redirect user location so he can download order Invoice
         const secret = config.SECRET;
@@ -435,6 +673,7 @@ const DOWNLOAD_INVOICE = async (req, res, next) => {
 };
 
 
+// USED_IN_THE_USER_DASHBOARD
 const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
     try {
         const USER_ID = req.user.id;
@@ -449,22 +688,38 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             return next(createHttpError(400, "Something went wrong."))
         }
 
-        const UserOrders = await userModel.findById(USER_ID)
+        const UserOrders = await userModel.findById(USER_ID, { orders: 1 })
             .populate({
                 path: "orders",
-                select: "product orderStatus payment totalAmount",
-                populate: {
-                    path: "product.productId",
-                    model: "Package",
-                    select: "name description productImg slug",
-                    populate: {
-                        path: "productImg",
-                        model: "productsimg",
-                        select: { imgSrc: 1, imagePath: 1, id: 1 }
+                select: { product: 1, booking: 1, orderStatus: 1, },
+                populate: [
+                    {
+                        path: "product.productId",
+                        model: "Package",
+                        select: { isVisible: 0, pkg_id: 0, isFeatured: 0, price: 0, policy: 0, packageListTextItems: 0, status: 0, notes: 0, __v: 0, updatedAt: 0, productBannerImgs: 0 },
+                        populate: {
+                            path: "productImg",
+                            model: "productsimg",
+                            options: { strictPopulate: false }
+                        }
+                    },
+                    {
+                        path: "booking",
+                        model: "Booking",
+                        select: { _id: 0, address: 1 },
+                        options: { strictPopulate: false }
+                    },
+                    {
+                        path: "transaction",
+                        model: "Transaction",
+                        select: "amount",
+                        options: { strictPopulate: false }
                     }
-                }
+                ]
+
             })
             .exec();
+
 
         if (!UserOrders) {
             return next(createHttpError(400, "oops something went wrong"));
@@ -475,7 +730,7 @@ const GET_ALL_ORDERS_BY_USER_ID = async (req, res, next) => {
             .json(
                 {
                     success: true,
-                    orders: UserOrders.orders
+                    orders: UserOrders?.orders
                 }
             );
 
@@ -610,7 +865,7 @@ const CHANGE_ORDER_STATUS = async (req, res, next) => {
  */
 
 
-const GET_ALL_ORDERS = async (req, res, next) => {
+const GET_NEW_ORDERS = async (req, res, next) => {
     const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
 
     if (error) {
@@ -666,6 +921,69 @@ const GET_ALL_ORDERS = async (req, res, next) => {
             }
         )
 
+}
+
+
+
+
+
+// TODO_
+const GET_ALL_ORDERS = async (req, res, next) => {
+    try {
+        const { error, value } = ALL_ORDER_SCHEMA_VALIDATION.validate(req.query);
+
+        if (error) {
+            return next(createHttpError(400, error?.details[0].message))
+        }
+
+        // const { page, limit } = req.query;
+
+        const PAGE = value.page || 1;
+        const LIMIT = value.limit || 10;
+        const SKIP = (PAGE - 1) * LIMIT;
+
+        const orders = await OrderModel.find()
+            .populate({
+                path: "product",
+                populate: {
+                    path: "productId",
+                    model: "Package"
+                },
+                options: { strictPopulate: false }
+            })
+            .populate(
+                {
+                    path: "booking",
+                    model: "Booking",
+                    select: { startDate: 1, endDate: 1 },
+                    options: { strictPopulate: false }
+
+                }
+            )
+            .populate(
+                {
+                    path: "transaction",
+                    model: "Transaction",
+                    select: { amount: 1, status: 1, paymentMethod: 1 },
+                    options: { strictPopulate: false }
+                }
+            ).limit(LIMIT).skip(SKIP).sort({ createdAt: -1 })
+
+        if (!orders) {
+            return next(createHttpError(400, "Something went wrong.."))
+        }
+
+        // on success
+
+        return res.status(200).json(
+            {
+                success: true,
+                orders: orders
+            }
+        )
+    } catch (error) {
+        return next(createHttpError(400, "Internal error."))
+    }
 }
 
 
@@ -742,6 +1060,7 @@ const GET_ALL_BOOKINGS = async (req, res, next) => {
 }
 
 const GET_FILTERED_ORDER = async (req, res, next) => {
+    console.log("CALLED")
     try {
         const { error, value } = GET_FILTERED_ORDER_VALIDATION_SCHEMA.validate(req.query);
 
@@ -759,7 +1078,6 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         if (filterBy === "Success") {
             filterBy = "Delivered"
         }
-        console.log(filterBy);
 
         const Order = await OrderModel.find(
             {
@@ -775,7 +1093,7 @@ const GET_FILTERED_ORDER = async (req, res, next) => {
         ).skip(skip).limit(limit)
             .populate({
                 path: "transaction",
-                select: "amount status gateway paymentMethod -_id"
+                select: "amount status gateway paymentMethod -_id",
             })
 
         return res.status(200).json({
@@ -911,7 +1229,7 @@ export {
     NEW_ORDER,
     GET_ALL_ORDERS_BY_USER_ID,
     GET_SINGLE_ORDERS,
-    GET_ALL_ORDERS,
+    GET_NEW_ORDERS,
     CHANGE_ORDER_STATUS,
     GET_FILTERED_ORDER,
     verifyPayments,
@@ -920,5 +1238,7 @@ export {
     DOWNLOAD_INVOICE,
     ATTACH_INVOICE_WITH_ORDER,
     GET_ALL_BOOKINGS,
-    GET_BOOKINGS
+    GET_BOOKINGS,
+    NEW_ORDER_V2,
+    GET_ALL_ORDERS
 }

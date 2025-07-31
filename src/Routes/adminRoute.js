@@ -2,6 +2,8 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import {
     ADMIN_DASHBOARD_ANALYTICS,
+    ADMIN_RESET_PASSWORD,
+    ADMIN_RESET_PASSWORD_URL_CREATE,
     CHANGE_ADMIN_PASSWORD,
     DELETE_SINGLE_USERS,
     GET_ALL_USERS,
@@ -10,6 +12,7 @@ import {
     GET_SINGLE_USERS,
     LoginAdmin,
     RegisterAdmin,
+    RESET_PASSWORD_VERIFY,
     SEARCH_AGENTS,
     SEARCH_ORDERS,
     SEARCH_USERS,
@@ -27,11 +30,10 @@ import {
     ATTACH_INVOICE_WITH_ORDER,
     CHANGE_ORDER_STATUS,
     GET_ALL_BOOKINGS,
-    GET_ALL_ORDERS,
-    GET_ALL_ORDERS_BY_USER_ID,
     GET_BOOKINGS,
     GET_FILTERED_ORDER,
-    GET_SINGLE_ORDERS
+    GET_NEW_ORDERS,
+    GET_ALL_ORDERS
 } from "../Orders/orderController.js";
 // AUTH..
 import isAdmin from "../middleware/isAdmin.js";
@@ -62,7 +64,7 @@ import {
     UNSET_SUPERVISOR_FROM_MANAGER
 } from "../Employee/controller/EmployeeController.js";
 import { nanoid } from "nanoid";
-import logger from "../logger/index.js";
+
 
 const AdminRoute = express.Router();
 
@@ -83,9 +85,14 @@ const LIMIT_ADMIN_LOGIN = rateLimit({
 AdminRoute.post('/register', Upload.single('avatar'), RegisterAdmin);
 AdminRoute.post('/login', LIMIT_ADMIN_LOGIN, LoginAdmin);
 
+// ADMIN_RESET_PASSWORD
+AdminRoute.post('/set-password', LIMIT_ADMIN_LOGIN, ADMIN_RESET_PASSWORD);
+AdminRoute.post('/reset-password', LIMIT_ADMIN_LOGIN, ADMIN_RESET_PASSWORD_URL_CREATE);
+AdminRoute.get('/verify-reset-password/:Hash', LIMIT_ADMIN_LOGIN, RESET_PASSWORD_VERIFY)
+
 // AUTH ADMIN THEN PROCEED FOR THE NEXT TASK..
 // ANALYTICS
-AdminRoute.get('/analytics', isAdmin, ADMIN_DASHBOARD_ANALYTICS);
+AdminRoute.get('/analytics', ADMIN_DASHBOARD_ANALYTICS);
 // Packages  
 AdminRoute.post('/package', isAdmin, Upload.single("image"), ADD_NEW_PACKAGE);
 AdminRoute.get('/package', isAdmin, GET_ALL_PACKAGE);
@@ -94,14 +101,22 @@ AdminRoute.patch('/package/:PERMALINK', isAdmin, UPDATE_PACKAGE);
 AdminRoute.delete('/package/:PKG_ID', isAdmin, DELETE_SINGLE_PACKAGE);
 
 // Orders  (ALl THE ROUTES Manage by ADMIN..)
+/**
+ * Todo _
+ *      Rename and write orders and new Order api again using oprators
+ */
+
+AdminRoute.get('/order-new/', isAdmin, GET_NEW_ORDERS);
+AdminRoute.get('/orders', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/booking/:BOOKING_ID', isAdmin, GET_BOOKINGS);
 AdminRoute.get('/order/success', GET_ALL_BOOKINGS) // get all the success order and its bookings info
-AdminRoute.get('/order/', isAdmin, GET_ALL_ORDERS);
 AdminRoute.get('/order/:ORDER_ID', isAdmin, VIEW_SINGLE_ORDER_ADMIN);
 AdminRoute.get('/order-filter', isAdmin, GET_FILTERED_ORDER);
 AdminRoute.patch('/order/:ORDER_ID', isAdmin, CHANGE_ORDER_STATUS);
-AdminRoute.post('/order-details', GET_ORDER_DETAILS); // For Internal comunication
+
+// For Internal comunication
 AdminRoute.post('/attach-invoice', ATTACH_INVOICE_WITH_ORDER)
+AdminRoute.post('/order-details', GET_ORDER_DETAILS);
 
 // USER-INFO-MANAGED_BY_ADMIN
 AdminRoute.get('/users/', isAdmin, GET_ALL_USERS);
@@ -110,7 +125,6 @@ AdminRoute.delete('/user/:USER_ID', isAdmin, DELETE_SINGLE_USERS);
 AdminRoute.get('/profile', isAdmin, VIEW_ADMIN_PROFILE);
 AdminRoute.post('/change-password', isAdmin, CHANGE_ADMIN_PASSWORD);
 // get-order-details-by-user
-
 // SEARCH USERS
 AdminRoute.get('/search-user', isAdmin, SEARCH_USERS);
 AdminRoute.get('/search-orders', isAdmin, SEARCH_ORDERS);

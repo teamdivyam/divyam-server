@@ -17,12 +17,12 @@ import {
     VERIFY_OTP,
     WHOAMI
 } from "../Users/userController.js";
-
 import {
     DOWNLOAD_INVOICE,
     GET_ALL_ORDERS_BY_USER_ID,
     GET_SINGLE_ORDERS,
     NEW_ORDER,
+    NEW_ORDER_V2,
     ORDER_CANCEL,
     SAVE_CART,
     verifyPayments
@@ -30,7 +30,6 @@ import {
 
 import {
     GET_ALL_FEATURED_PACKAGE,
-    GET_ALL_PACKAGE,
     GET_ALL_PACKAGE_FOR_USERS,
     GET_SINGLE_PACKAGE_FOR_USERS
 } from "../Package/PackageController.js";
@@ -45,13 +44,17 @@ import { config } from "../config/_config.js";
 import isGuestUser from "../middleware/isGuestUser.js";
 
 const limitOTP = rateLimit({
-    windowMs: 60000 * 30,
-    max: config.OTP_RATE_LIMIT,
+    windowMs: 60000 * 5, //5 minutes
+    max: config.OTP_RATE_LIMIT || 5,
     standardHeaders: 'true',
     legacyHeaders: false,
     standardHeaders: true,
     message: 'Too many requests. Please try again later.',
-    keyGenerator: (req) => req.ip
+    keyGenerator: (req) => {
+        const deviceId = req?.headers['x-device-id'];
+        console.log("DEVICE_ID", deviceId);
+        return deviceId;
+    }
 });
 
 // Router for USERS...
@@ -84,8 +87,11 @@ Route.get('/user/order/:ORDER_ID', authUser, GET_SINGLE_ORDERS);  //Single_Order
 Route.get('/user/order-cancel/:ORDER_ID', authUser, ORDER_CANCEL);  //cancel-order
 Route.post('/availability-check', CHECK_AREA_STATUS);
 Route.post('/check-pincode', PINCODE_VERIFY);
+
 // Route.post('/new-order', authUser, NEW_ORDER);
 Route.post('/user/new-order', authUser, NEW_ORDER);
+Route.post('/user/v1/new-order', authUser, NEW_ORDER_V2);
+// Route.post('/user/new-order', authUser, NEW_ORDER);
 Route.post('/verify-payments', authUser, verifyPayments);
 Route.get('/user/ordered', DOWNLOAD_INVOICE) // open new page where user ca download their invoice
 
