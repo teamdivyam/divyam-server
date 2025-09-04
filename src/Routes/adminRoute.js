@@ -64,6 +64,9 @@ import {
     UNSET_SUPERVISOR_FROM_MANAGER
 } from "../Employee/controller/EmployeeController.js";
 import { nanoid } from "nanoid";
+import StockController from "../controllers/stock.controller.js";
+import upload from "../utils/upload.js";
+import ProductController from "../controllers/product.controller.js";
 
 
 const AdminRoute = express.Router();
@@ -152,6 +155,18 @@ AdminRoute.get('/agent/:AGENT_ID', isAdmin, GET_SINGLE_DELIVERY_AGENT); //get-si
 AdminRoute.get('/search', isAdmin, SEARCH_AGENTS); // SEARCH AGENTS
 AdminRoute.delete('/agent/:AGENT_ID', isAdmin, DELETE_SINGLE_DELIVERY_AGENT); //delete-single-agent
 
-AdminRoute.post('/get-presigned-url', isAdmin, GET_PRESIGNED_URL)
+AdminRoute.post('/get-presigned-url', isAdmin, GET_PRESIGNED_URL);
+
+// Stocks
+AdminRoute.get("/stock", StockController.getStock);
+AdminRoute.get("/stock/:sku", StockController.getSingleStock);
+AdminRoute.get("/stock-variant-options", StockController.getStockVariantOptions);
+AdminRoute.post("/create-stock", StockController.createStock);
+AdminRoute.patch("/stock", StockController.updateStock);
+AdminRoute.delete("/stock", StockController.deleteStock);
+
+// Products
+AdminRoute.get("/product", ProductController.getProducts)
+AdminRoute.post("/create-product", upload.array("images", 10), ProductController.createProduct)
 
 export default AdminRoute;

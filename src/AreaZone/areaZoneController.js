@@ -9,7 +9,9 @@ import {
 } from "../Validators/areaZone/schema.js"
 
 import areaPinModel from './areaPinCodeModel.js';
-import moment from 'moment';
+// import moment from 'moment';
+import moment from 'moment-timezone';
+
 import logger from '../logger/index.js';
 
 

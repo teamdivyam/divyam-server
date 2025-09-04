@@ -15,7 +15,7 @@ const UserAuth = async (req, res, next) => {
             return res.status(403).json({ error: 'Invalid or missing token' });
         }
 
-        const decodeToken = await jwt.verify(token, config.USER_SECRET);
+        const decodeToken = jwt.verify(token, config.USER_SECRET);
 
         if (!decodeToken) {
             return next(createHttpError(401, 'Unauthorize..'))

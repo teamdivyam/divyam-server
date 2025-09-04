@@ -12,7 +12,7 @@ const s3 = new S3Client({
 /*
 @file 
 @destinationPath on server
-*/
+*/ 
 const UploadImageOnServer = async (file, uploadDestinationPath) => {
     try {
         // set folder path 
