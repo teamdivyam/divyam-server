@@ -37,7 +37,7 @@ const PackageSchema = new Schema({
     isFeatured: { type: Boolean, default: false },
     discount: {
         isDiscount: { type: Boolean, default: false },
-        disCountPercentForReferralOrder: { type: number, default: 0 }
+        disCountPercentForReferralOrder: { type: Number, default: 0 }
     },
     rating: {
         type: Number,
