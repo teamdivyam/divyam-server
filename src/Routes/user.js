@@ -7,6 +7,7 @@ import {
     GET_ALL_ADDRESS,
     GET_PRIMARY_ADDRESS,
     GetProducts,
+    GetSingleProduct,
     GUEST_USER,
     LOGOUT_USER,
     RegisterUser,
@@ -106,7 +107,7 @@ Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 Route.get('/logout', authUser, LOGOUT_USER)
 
 Route.get('/products', authUser, GetProducts)
-Route.get('/products/:productId', authUser, GetProducts)
+Route.get('/products/:productId', authUser, GetSingleProduct)
 
 
 export default Route;
