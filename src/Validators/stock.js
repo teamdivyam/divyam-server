@@ -6,7 +6,7 @@ export const StockSchema = Joi.object({
     name: Joi.string().required(),
 
     category: Joi.string()
-        .valid(...Object.keys(CATEGORY))
+        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
         .default("OTHERS"),
 
     quantity: Joi.number().min(0).default(0),
@@ -18,7 +18,7 @@ export const StockParentSchema = Joi.object({
     name: Joi.string().required(),
 
     category: Joi.string()
-        .valid(...Object.keys(CATEGORY))
+        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
         .default("OTHERS"),
 });
 
@@ -43,12 +43,12 @@ export const SelectStockVariantSchema = Joi.object({
 export const CreateStockVariantSchema = Joi.object({
     parentStockName: Joi.string().required(),
     parentStockCategory: Joi.string()
-        .valid(...Object.values(CATEGORY))
+        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
         .default("OTHERS"),
 
     variantStockName: Joi.string().required(),
     variantStockCategory: Joi.string()
-        .valid(...Object.values(CATEGORY))
+        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
         .default("OTHERS"),
     variantStockUnit: Joi.string().valid(...Object.values(UNITS)),
     variantSizeOrWeight: Joi.string(),

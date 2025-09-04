@@ -36,6 +36,7 @@ const ProductController = {
         discount,
         discountPrice,
         originalPrice,
+        category
       } = req.body;
       const { error, value: validatedData } = ProductSchema.validate(
         {
@@ -49,6 +50,7 @@ const ProductController = {
           discount,
           discountPrice,
           originalPrice,
+          category
         },
         { stripUnknown: true } // Remove Unknown Fields
       );
@@ -95,14 +97,16 @@ const ProductController = {
 
       const productId = generateProductID();
 
+      console.log("asa", validatedData);
+
       await ProductModel.create({
         stock: validatedData.stock,
         productId: productId,
         name: validatedData.name,
         description: validatedData.description,
-        discount: validatedData.discount,
-        discountPrice: validatedData.discountPrice,
-        originalPrice: validatedData.originalPrice,
+        discount: validatedData.discount || validatedData.variants[0]?.discount,
+        discountPrice: validatedData.discountPrice || validatedData.variants[0]?.discountPrice,
+        originalPrice: validatedData.originalPrice|| validatedData.variants[0]?.originalPrice,
         category: validatedData.category,
         tags: validatedData.tags,
         images: productImageURLs,

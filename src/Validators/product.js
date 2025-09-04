@@ -25,13 +25,13 @@ export const ProductSchema = Joi.object({
   originalPrice: Joi.number().min(0).default(0),
 
   category: Joi.string()
-    .valid(...Object.values(PRODUCT_CATEGORY))
+    .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
     .default(PRODUCT_CATEGORY.OTHERS),
 
   tags: Joi.array().items(Joi.string()).default([]),
 
   status: Joi.string()
-    .valid(...Object.values(PRODUCT_STATUS))
+    .valid("active", "inactive")
     .default(PRODUCT_STATUS.active),
 
   variants: Joi.array().items(
@@ -48,7 +48,7 @@ export const ProductSchema = Joi.object({
       discountPrice: Joi.number().min(0).default(0),
       originalPrice: Joi.number().min(0).default(0),
       status: Joi.string()
-        .valid(...Object.values(PRODUCT_STATUS))
+        .valid("active", "inactive")
         .default(PRODUCT_STATUS.active),
     })
   ),
