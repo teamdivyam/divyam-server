@@ -686,9 +686,9 @@ const GetProducts = async (req, res, next) => {
 const GetSingleProduct = async (req, res, next) => {
   try {
     const { productId } = req.params;
-    const product = await ProductModel.find({ productId });
+    const product = await ProductModel.findOne({ productId }).populate("variants.stock");
 
-     if (!product) {
+    if (!product) {
       return next(createHttpError(404, "Product not found"));
     }
 
@@ -718,5 +718,5 @@ export {
   UPDATE_EXISTING_ADDRESS,
   GET_PRIMARY_ADDRESS,
   GetProducts,
-  GetSingleProduct
+  GetSingleProduct,
 };
