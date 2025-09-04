@@ -18,10 +18,10 @@ app.use(helmet());
 app.disable('x-powered-by');
 app.set('trust proxy', true);
 
-app.use((req, res, next) => {
-    logger.info(`Incoming request: ${req.ip} ${req.method} ${req.url}`);
-    next();
-});
+// app.use((req, res, next) => {
+//     logger.info(`Incoming request: ${req.ip} ${req.method} ${req.url}`);
+//     next();
+// });
 
 const allowedOrigins = [
     config.ORGIN1,

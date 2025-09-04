@@ -191,14 +191,14 @@ const UPDATE_PACKAGE = async (req, res, next) => {
 
 
         // set discount
-        let discount = {
+        let setDiscount = {
             isDiscount: false,
         };
         // { isDiscount, disCountPercentForReferralOrder }
 
         if (discount) {
-            discount.isDiscount = true;
-            discount.disCountPercentForReferralOrder = discount;
+            setDiscount.isDiscount = true;
+            setDiscount.disCountPercentForReferralOrder = discount;
         }
 
         // Update Package
@@ -219,7 +219,7 @@ const UPDATE_PACKAGE = async (req, res, next) => {
                 productBannerImgs: bannerImgArr,
                 isFeatured: isFeaturedProduct,
                 isVisible,
-                discount
+                discount: setDiscount,
             }
         );
 

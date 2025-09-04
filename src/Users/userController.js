@@ -17,6 +17,7 @@ import {
     VALIDATE_USER_ADDRESS
 } from "../Validators/users/schema.js";
 import logger from "../logger/index.js";
+import ProductModel from "../models/product.model.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
@@ -666,6 +667,20 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
     }
 }
 
+const GetProducts = async (req, res, next) => {
+    try {
+      const products = await ProductModel.find({});
+
+      res.status(200).json({
+        success: true,
+        products: products,
+      });
+    } catch (error) {
+      console.error("error in get product:", error);
+      next(createHttpError(500, "Internal Server Error"));
+    }
+}
+
 export {
     RegisterUser,
     VERIFY_OTP,
@@ -680,5 +695,6 @@ export {
     SET_DEFAULT_ADDRESS,
     DELETE_SINGLE_ADDRESS,
     UPDATE_EXISTING_ADDRESS,
-    GET_PRIMARY_ADDRESS
+    GET_PRIMARY_ADDRESS,
+    GetProducts
 }

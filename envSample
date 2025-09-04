@@ -6,7 +6,7 @@ ADMIN_DASHBORAD_URL=*.divyam.com
 ORIGIN1=https://www.divyam.com
 ORIGIN2=https://divyam.com
 ORIGIN3=www.divyam.com
-
+NODE_ENV=development
 
 DB_URL=mongodb://divyammain:D3R2SXLs3L5Mn4Yi@10.0.1.184:27017/admin?replicaSet=rs0
 

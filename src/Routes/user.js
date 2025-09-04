@@ -6,6 +6,7 @@ import {
     DELETE_SINGLE_ADDRESS,
     GET_ALL_ADDRESS,
     GET_PRIMARY_ADDRESS,
+    GetProducts,
     GUEST_USER,
     LOGOUT_USER,
     RegisterUser,
@@ -103,5 +104,8 @@ Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 
 // LOG-out-user
 Route.get('/logout', authUser, LOGOUT_USER)
+
+Route.get('/products', authUser, GetProducts)
+
 
 export default Route;
