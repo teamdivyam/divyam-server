@@ -36,7 +36,7 @@ const ProductController = {
         discount,
         discountPrice,
         originalPrice,
-        category
+        category,
       } = req.body;
       const { error, value: validatedData } = ProductSchema.validate(
         {
@@ -50,7 +50,7 @@ const ProductController = {
           discount,
           discountPrice,
           originalPrice,
-          category
+          category,
         },
         { stripUnknown: true } // Remove Unknown Fields
       );
@@ -105,8 +105,12 @@ const ProductController = {
         name: validatedData.name,
         description: validatedData.description,
         discount: validatedData.discount || validatedData.variants[0]?.discount,
-        discountPrice: validatedData.discountPrice || validatedData.variants[0]?.discountPrice,
-        originalPrice: validatedData.originalPrice|| validatedData.variants[0]?.originalPrice,
+        discountPrice:
+          validatedData.discountPrice ||
+          validatedData.variants[0]?.discountPrice,
+        originalPrice:
+          validatedData.originalPrice ||
+          validatedData.variants[0]?.originalPrice,
         category: validatedData.category,
         tags: validatedData.tags,
         images: productImageURLs,
@@ -123,6 +127,24 @@ const ProductController = {
     }
   },
   updateProduct: async (req, res, next) => {},
+
+  deleteProduct: async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const deletedProduct = await ProductModel.deleteOne({ productId });
+
+      console.log(deletedProduct);
+
+      if (deletedProduct.deletedCount === 0) {
+        return res.status(404).send();
+      }
+
+      res.status(204).send("Product deleted");
+    } catch (error) {
+      console.error("error in delete product:", error);
+      next(createHttpError(500, "Internal Server Error"));
+    }
+  },
 };
 
 export default ProductController;

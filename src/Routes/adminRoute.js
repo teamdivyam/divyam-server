@@ -168,5 +168,6 @@ AdminRoute.delete("/stock", StockController.deleteStock);
 // Products
 AdminRoute.get("/product", ProductController.getProducts)
 AdminRoute.post("/create-product", upload.array("images", 10), ProductController.createProduct)
+AdminRoute.delete("/product/:productId", ProductController.deleteProduct)
 
 export default AdminRoute;

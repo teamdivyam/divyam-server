@@ -282,7 +282,7 @@ const WHOAMI = async (req, res, next) => {
     // on success
 
     const deviceIdInHeader = req?.headers["x-device-id"] || null;
-    console.log(deviceIdInHeader);
+    // console.log(deviceIdInHeader);
 
     // let deviceId;
     // if (deviceIdInHeader === null) {

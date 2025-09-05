@@ -37,8 +37,7 @@ const StockSchema = new mongoose.Schema(
         },
 
         // Stock & Price (always at variant level OR at root if no variant)
-        quantity: { type: Number, default: 0 },    
-        // price: { type: Number, required: true },
+        quantity: { type: Number, default: 0 },
     },  
     {
         timestamps: true,
