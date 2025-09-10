@@ -6,6 +6,7 @@ import { S3ClientConfig } from "../config/aws.js";
 import { v4 as uuidv4 } from "uuid";
 import generateProductID from "../utils/generateProductID.js";
 import StockModel from "../models/stock.model.js";
+import slugify from "slugify";
 
 const ProductController = {
   getProducts: async (req, res, next) => {
@@ -38,6 +39,14 @@ const ProductController = {
         originalPrice,
         category,
       } = req.body;
+
+      // Check slug name is unique and already exist or not
+      const slug = slugify(name, { lower: true, strict: true });
+      const slugAlreadyExists = await ProductModel.findOne({ slug });
+      if (slugAlreadyExists) {
+        return next(createHttpError(409, "Name already existed!"));
+      }
+
       const { error, value: validatedData } = ProductSchema.validate(
         {
           stock,
@@ -73,7 +82,7 @@ const ProductController = {
         );
       }
 
-      let productImageURLs = undefined;
+      let productImageURLs = [];
 
       if (req.files) {
         const uploadFilePromises = req.files.map(async (file) => {
@@ -92,27 +101,29 @@ const ProductController = {
           return `https://assets.divyam.com/${key}`;
         });
 
-        productImageURLs = await Promise.all(uploadFilePromises);
+        const imageURLs = await Promise.all(uploadFilePromises);
+
+        productImageURLs.push(...imageURLs);
       }
 
       const productId = generateProductID();
 
-      console.log("asa", validatedData);
-
       await ProductModel.create({
         stock: validatedData.stock,
         productId: productId,
+        slug: slug,
         name: validatedData.name,
         description: validatedData.description,
         discount: validatedData.discount || validatedData.variants[0]?.discount,
         discountPrice:
-          validatedData.discountPrice ||
-          validatedData.variants[0]?.discountPrice,
+          validatedData.discountPrice.toFixed(2) ||
+          validatedData.variants[0]?.discountPrice.toFixed(2),
         originalPrice:
           validatedData.originalPrice ||
           validatedData.variants[0]?.originalPrice,
         category: validatedData.category,
         tags: validatedData.tags,
+        mainImage: productImageURLs[0],
         images: productImageURLs,
         variants: validatedData.variants,
       });
@@ -132,8 +143,6 @@ const ProductController = {
     try {
       const { productId } = req.params;
       const deletedProduct = await ProductModel.deleteOne({ productId });
-
-      console.log(deletedProduct);
 
       if (deletedProduct.deletedCount === 0) {
         return res.status(404).send();

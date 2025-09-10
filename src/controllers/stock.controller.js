@@ -4,6 +4,7 @@ import {
   StockSchema,
   CreateStockVariantSchema,
   SelectStockVariantSchema,
+  VariantUpdateValidationSchema,
 } from "../Validators/stock.js";
 import {
   checkStockAlreadyExists,
@@ -38,12 +39,21 @@ const StockController = {
 
       const stock = await StockModel.findOne({ sku });
 
-      const variantStock = await StockModel.find({ parentProduct: stock._id });
+      // Variant stock of stock
+      const variantStock = await StockModel.find({
+        parentProduct: stock._id,
+      }).lean();
+
+      // Total quantity of stock
+      const totalQuantity = variantStock.reduce((sum, variant) => {
+        return sum + variant.quantity;
+      }, 0);
 
       res.status(200).json({
         success: true,
         stock: stock,
         variantStock: variantStock,
+        totalQuantity: totalQuantity
       });
     } catch (error) {
       console.error("error in getting single stock:", error);
@@ -296,7 +306,53 @@ const StockController = {
   //     }
   // },
 
-  updateStock: async (req, res, next) => {},
+  updateStock: async (req, res, next) => {
+    try {
+      const { sku } = req.params;
+
+      const { error, value: validatedData } =
+        VariantUpdateValidationSchema.validate(
+          req.body,
+          { stripUnknown: true } // Remove Unknown Fields
+        );
+
+      if (error) {
+        // Create a detailed error message
+        const errorMessage = error.details.map((detail) => ({
+          field: detail.path.join("."),
+          message: detail.message,
+          type: detail.type,
+        }));
+
+        console.log("Error update stock validation:", errorMessage);
+
+        // Send HTTP 400 error with validation details
+        return next(
+          createHttpError(400, "Validation failed", {
+            errors: errorMessage,
+          })
+        );
+      }
+
+      await StockModel.findOneAndUpdate(
+        { sku },
+        {
+          status: validatedData.variantStatus,
+          name: validatedData.variantName,
+          category: validatedData.category,
+          capacity: validatedData.capacity,
+          quantity: validatedData.quantity,
+          sizeOrWeight: validatedData.sizeOrWeight,
+          unit: validatedData.unit,
+        }
+      );
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("error in update single stock:", error);
+      next(createHttpError(500, "Internal Server Error"));
+    }
+  },
 
   deleteStock: async (req, res, next) => {},
 };

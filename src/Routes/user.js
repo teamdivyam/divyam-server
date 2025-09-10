@@ -107,7 +107,7 @@ Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 Route.get('/logout', authUser, LOGOUT_USER)
 
 Route.get('/products', GetProducts)
-Route.get('/products/:productId', GetSingleProduct)
+Route.get('/products/:productSlug', GetSingleProduct)
 
 
 export default Route;

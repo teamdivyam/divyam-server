@@ -162,7 +162,7 @@ AdminRoute.get("/stock", StockController.getStock);
 AdminRoute.get("/stock/:sku", StockController.getSingleStock);
 AdminRoute.get("/stock-variant-options", StockController.getStockVariantOptions);
 AdminRoute.post("/create-stock", StockController.createStock);
-AdminRoute.patch("/stock", StockController.updateStock);
+AdminRoute.patch("/stock/:sku", StockController.updateStock);
 AdminRoute.delete("/stock", StockController.deleteStock);
 
 // Products

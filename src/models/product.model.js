@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 export const PRODUCT_CATEGORY = {
   COOKING: "COOKING",
@@ -53,6 +54,7 @@ const ProductSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  slug: { type: String, unique: true },
   name: {
     type: String,
     required: true,
@@ -77,6 +79,9 @@ const ProductSchema = new mongoose.Schema({
     type: Number,
     min: 0,
     default: 0,
+  },
+  mainImage: {
+    type: String
   },
   images: {
     type: [String],

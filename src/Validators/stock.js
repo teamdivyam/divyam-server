@@ -1,57 +1,81 @@
 import Joi from "joi";
-import { CATEGORY, UNITS } from "../models/stock.model.js";
+import { CATEGORY, UNITS, STOCK_STATUS } from "../models/stock.model.js";
 
 // Validation schema
 export const StockSchema = Joi.object({
-    name: Joi.string().required(),
+  name: Joi.string().required(),
 
-    category: Joi.string()
-        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
-        .default("OTHERS"),
+  category: Joi.string()
+    .valid("COOKING", "DINING", "SERVING", "DECORATIVE", "OTHERS")
+    .default("OTHERS"),
 
-    quantity: Joi.number().min(0).default(0),
+  quantity: Joi.number().min(0).default(0),
 
-    // price: Joi.number().required().min(0),
+  // price: Joi.number().required().min(0),
 });
 
 export const StockParentSchema = Joi.object({
-    name: Joi.string().required(),
+  name: Joi.string().required(),
 
-    category: Joi.string()
-        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
-        .default("OTHERS"),
+  category: Joi.string()
+    .valid("COOKING", "DINING", "SERVING", "DECORATIVE", "OTHERS")
+    .default("OTHERS"),
 });
 
 export const SelectStockVariantSchema = Joi.object({
-    variantStockName: Joi.string().required(),
+  variantStockName: Joi.string().required(),
 
-    variantStockCategory: Joi.string()
-        .valid(...Object.values(CATEGORY))
-        .default("OTHERS"),
+  variantStockCategory: Joi.string()
+    .valid(...Object.values(CATEGORY))
+    .default("OTHERS"),
 
-    parentStockId: Joi.string()
-        .hex()
-        .length(24) // MongoDB ObjectId length
-        .allow(null),
+  parentStockId: Joi.string()
+    .hex()
+    .length(24) // MongoDB ObjectId length
+    .allow(null),
 
-    variantStockUnit: Joi.string().valid(...Object.values(UNITS)),
-    variantSizeOrWeight: Joi.string(),
-    variantStockCapacity: Joi.number(),
-    variantStockQuantity: Joi.number().min(0).default(0),
+  variantStockUnit: Joi.string().valid(...Object.values(UNITS)),
+  variantSizeOrWeight: Joi.string(),
+  variantStockCapacity: Joi.number(),
+  variantStockQuantity: Joi.number().min(0).default(0),
 });
 
 export const CreateStockVariantSchema = Joi.object({
-    parentStockName: Joi.string().required(),
-    parentStockCategory: Joi.string()
-        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
-        .default("OTHERS"),
+  parentStockName: Joi.string().required(),
+  parentStockCategory: Joi.string()
+    .valid("COOKING", "DINING", "SERVING", "DECORATIVE", "OTHERS")
+    .default("OTHERS"),
 
-    variantStockName: Joi.string().required(),
-    variantStockCategory: Joi.string()
-        .valid('COOKING', 'DINING', 'SERVING', 'DECORATIVE', 'OTHERS')
-        .default("OTHERS"),
-    variantStockUnit: Joi.string().valid(...Object.values(UNITS)),
-    variantSizeOrWeight: Joi.string(),
-    variantStockCapacity: Joi.number(),
-    variantStockQuantity: Joi.number().min(0).default(0),
+  variantStockName: Joi.string().required(),
+  variantStockCategory: Joi.string()
+    .valid("COOKING", "DINING", "SERVING", "DECORATIVE", "OTHERS")
+    .default("OTHERS"),
+  variantStockUnit: Joi.string().valid(...Object.values(UNITS)),
+  variantSizeOrWeight: Joi.string(),
+  variantStockCapacity: Joi.number(),
+  variantStockQuantity: Joi.number().min(0).default(0),
+});
+
+export const VariantUpdateValidationSchema = Joi.object({
+  variantStatus: Joi.string()
+    .valid(...Object.values(STOCK_STATUS))
+    .optional(),
+
+  variantName: Joi.string().trim().optional(),
+
+  category: Joi.string()
+    .valid(...Object.values(CATEGORY))
+    .optional(),
+
+  capacity: Joi.number().min(0).optional(),
+
+  quantity: Joi.number().min(0).optional(),
+
+  sizeOrWeight: Joi.alternatives()
+    .try(Joi.number().min(0), Joi.string().trim())
+    .optional(),
+
+  unit: Joi.string()
+    .valid(...Object.values(UNITS))
+    .optional(),
 });

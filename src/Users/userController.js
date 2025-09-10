@@ -672,7 +672,9 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
 
 const GetProducts = async (req, res, next) => {
   try {
-    const products = await ProductModel.find({});
+    const products = await ProductModel.find({}).select(
+      "-_id productId name discount discountPrice originalPrice mainImage category status slug"
+    );
 
     res.status(200).json({
       success: true,
@@ -683,10 +685,22 @@ const GetProducts = async (req, res, next) => {
     next(createHttpError(500, "Internal Server Error"));
   }
 };
+
 const GetSingleProduct = async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const product = await ProductModel.findOne({ productId }).populate("variants.stock");
+    const { productSlug } = req.params;
+    const product = await ProductModel.findOne({ slug: productSlug })
+      .select(
+        "-_id stock productId slug name description discount discountPrice originalPrice images category tags status"
+      )
+      .populate({
+        path: "stock",
+        select: "-_id sku name category quantity status",
+      })
+      .populate({
+        path: "variants.stock",
+        select: "sku name category quantity status variantAttributes remarks",
+      });
 
     if (!product) {
       return next(createHttpError(404, "Product not found"));
