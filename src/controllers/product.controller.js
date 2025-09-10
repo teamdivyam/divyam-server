@@ -5,7 +5,6 @@ import createHttpError from "http-errors";
 import { S3ClientConfig } from "../config/aws.js";
 import { v4 as uuidv4 } from "uuid";
 import generateProductID from "../utils/generateProductID.js";
-import StockModel from "../models/stock.model.js";
 import slugify from "slugify";
 
 const ProductController = {
@@ -116,8 +115,8 @@ const ProductController = {
         description: validatedData.description,
         discount: validatedData.discount || validatedData.variants[0]?.discount,
         discountPrice:
-          validatedData.discountPrice.toFixed(2) ||
-          validatedData.variants[0]?.discountPrice.toFixed(2),
+          Number(validatedData.discountPrice.toFixed(2)) ||
+          Number(validatedData.variants[0]?.discountPrice.toFixed(2)),
         originalPrice:
           validatedData.originalPrice ||
           validatedData.variants[0]?.originalPrice,

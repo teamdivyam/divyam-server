@@ -14,34 +14,37 @@ export const PRODUCT_STATUS = {
   inactive: "inactive",
 };
 
-const VariantSchema = new mongoose.Schema({
-  stock: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Stock",
-    required: true,
+const VariantSchema = new mongoose.Schema(
+  {
+    stock: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Stock",
+      required: true,
+    },
+    sku: String,
+    discount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    discountPrice: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    originalPrice: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: Object.values(PRODUCT_STATUS),
+      default: PRODUCT_STATUS.active,
+    },
   },
-  sku: String,
-  discount: {
-    type: Number,
-    min: 0,
-    default: 0,
-  },
-  discountPrice: {
-    type: Number,
-    min: 0,
-    default: 0,
-  },
-  originalPrice: {
-    type: Number,
-    min: 0,
-    default: 0,
-  },
-  status: {
-    type: String,
-    enum: Object.values(PRODUCT_STATUS),
-    default: PRODUCT_STATUS.active,
-  },
-});
+  { _id: false }
+);
 
 const ProductSchema = new mongoose.Schema({
   stock: {
@@ -81,7 +84,7 @@ const ProductSchema = new mongoose.Schema({
     default: 0,
   },
   mainImage: {
-    type: String
+    type: String,
   },
   images: {
     type: [String],

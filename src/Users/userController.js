@@ -672,15 +672,46 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
 
 const GetProducts = async (req, res, next) => {
   try {
-    const products = await ProductModel.find({})
+    const { page = 1, searchTerm, limit = 10, minPrice, maxPrice, category } = req.query;
+
+    // Build the filter object
+    const filter = {};
+
+    // Text search across name and tags
+    if (searchTerm) {
+      filter.$or = [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { tags: { $regex: searchTerm, $options: "i" } },
+      ];
+    }
+
+    // Price range filter
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.discountPrice = {};
+      if (minPrice !== undefined) filter.discountPrice.$gte = Number(minPrice);
+      if (maxPrice !== undefined) filter.discountPrice.$lte = Number(maxPrice);
+    }
+
+    // Category filter
+    if (category) {
+      filter.category = category;
+    }
+
+    const products = await ProductModel.find(filter)
       .select(
         "-_id productId name discount discountPrice originalPrice mainImage category tags status slug"
       )
-      .lean();
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .exec();
+
+    const total = await ProductModel.countDocuments(filter);
 
     res.status(200).json({
-      success: true,
       products: products,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
     });
   } catch (error) {
     console.error("error in get product:", error);
@@ -693,7 +724,7 @@ const GetSingleProduct = async (req, res, next) => {
     const { productSlug } = req.params;
     const product = await ProductModel.findOne({ slug: productSlug })
       .select(
-        "-_id stock productId slug name description discount discountPrice originalPrice images category tags status"
+        "-_id stock productId slug name description discount discountPrice originalPrice images category tags status variants.stock variants.discount variants.discountPrice variants.originalPrice variants.status"
       )
       .populate({
         path: "stock",
