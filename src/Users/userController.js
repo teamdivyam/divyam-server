@@ -672,9 +672,11 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
 
 const GetProducts = async (req, res, next) => {
   try {
-    const products = await ProductModel.find({}).select(
-      "-_id productId name discount discountPrice originalPrice mainImage category status slug"
-    );
+    const products = await ProductModel.find({})
+      .select(
+        "-_id productId name discount discountPrice originalPrice mainImage category tags status slug"
+      )
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -699,8 +701,10 @@ const GetSingleProduct = async (req, res, next) => {
       })
       .populate({
         path: "variants.stock",
-        select: "sku name category quantity status variantAttributes remarks",
-      });
+        select:
+          "-_id sku name category quantity status variantAttributes remarks",
+      })
+      .lean();
 
     if (!product) {
       return next(createHttpError(404, "Product not found"));
