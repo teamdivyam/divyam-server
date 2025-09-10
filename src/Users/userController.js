@@ -17,7 +17,7 @@ import {
   VALIDATE_USER_ADDRESS,
 } from "../Validators/users/schema.js";
 import logger from "../logger/index.js";
-import ProductModel from "../models/product.model.js";
+import ProductModel, { PRODUCT_CATEGORY } from "../models/product.model.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
@@ -708,6 +708,8 @@ const GetProducts = async (req, res, next) => {
     const total = await ProductModel.countDocuments(filter);
 
     res.status(200).json({
+      success: true,
+      categories: Object.values(PRODUCT_CATEGORY),
       products: products,
       total,
       page,
