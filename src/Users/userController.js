@@ -735,7 +735,7 @@ const GetSingleProduct = async (req, res, next) => {
     const product = await ProductModel.findOne({ slug: productSlug })
       .select(
         `-_id stock productId slug name description discount discountPrice originalPrice 
-        images category tags status variants.stock variants.discount variants.discountPrice 
+        images category tags status variants.variantId variants.stock variants.discount variants.discountPrice 
         variants.originalPrice variants.status`
       )
       .populate({
