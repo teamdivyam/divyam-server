@@ -6,3 +6,5 @@ export default function generateProductID() {
   
   return `PRD-${nanoid()}`;
 }
+
+

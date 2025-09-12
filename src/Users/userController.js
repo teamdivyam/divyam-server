@@ -18,6 +18,7 @@ import {
 } from "../Validators/users/schema.js";
 import logger from "../logger/index.js";
 import ProductModel, { PRODUCT_CATEGORY } from "../models/product.model.js";
+import CartModel from "../models/cart.model.js";
 
 // Register User with Mobile Number..
 const RegisterUser = async (req, res, next) => {
@@ -672,7 +673,14 @@ const DELETE_SINGLE_ADDRESS = async (req, res, next) => {
 
 const GetProducts = async (req, res, next) => {
   try {
-    const { page = 1, searchTerm, limit = 10, minPrice, maxPrice, category } = req.query;
+    const {
+      page = 1,
+      searchTerm,
+      limit = 10,
+      minPrice,
+      maxPrice,
+      category,
+    } = req.query;
 
     // Build the filter object
     const filter = {};
@@ -713,7 +721,7 @@ const GetProducts = async (req, res, next) => {
       products: products,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error("error in get product:", error);
@@ -726,7 +734,9 @@ const GetSingleProduct = async (req, res, next) => {
     const { productSlug } = req.params;
     const product = await ProductModel.findOne({ slug: productSlug })
       .select(
-        "-_id stock productId slug name description discount discountPrice originalPrice images category tags status variants.stock variants.discount variants.discountPrice variants.originalPrice variants.status"
+        `-_id stock productId slug name description discount discountPrice originalPrice 
+        images category tags status variants.stock variants.discount variants.discountPrice 
+        variants.originalPrice variants.status`
       )
       .populate({
         path: "stock",
@@ -753,6 +763,237 @@ const GetSingleProduct = async (req, res, next) => {
   }
 };
 
+const GetCart = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const cart = await CartModel.findOne({ userId: userId }).select(
+      "-_id productCartList packageCartList subTotal total"
+    );
+    res.status(200).json({
+      success: true,
+      cart: cart,
+    });
+  } catch (error) {
+    console.error("error get cart:", error);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
+const AddItemInCart = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { itemType, itemId, variantId, quantity } = req.body;
+
+    let userCart = await CartModel.findOne({ userId: userId });
+    if (!userCart) {
+      userCart = await CartModel.create({ userId: userId });
+    }
+
+    if (itemType === "package") {
+      /** Cart Package */
+      const isItemAlreadyInCart = userCart.packageCartList.find(
+        (item) => item.package === itemId
+      );
+      if (isItemAlreadyInCart) {
+        return next(createHttpError(409, "Item in cart already existed!"));
+      }
+      userCart.packageCartList.push({
+        package: itemId,
+        quantity: quantity,
+      });
+
+      const cartSubTotal = userCart.packageCartList.reduce((sum, item) => {
+        return sum + item.discountPrice * item.quantity;
+      }, 0);
+      userCart.subTotal = Number(cartSubTotal.toFixed(2));
+      userCart.total = Number(cartSubTotal.toFixed(2));
+
+      await userCart.save();
+    } else if (itemType === "product" && variantId) {
+      /** Cart Product with Variant */
+      const isVariantAlreadyInCart = userCart.productCartList.find(
+        (item) => item.variantId === variantId
+      );
+      if (isVariantAlreadyInCart) {
+        return next(createHttpError(409, "Variant in cart already existed!"));
+      } else {
+        const product = await ProductModel.findOne({ productId: itemId });
+        const productVariant = product.variants.find(
+          (variant) => variant.variantId === variantId
+        );
+
+        userCart.productCartList.push({
+          productId: product.productId,
+          variantId: productVariant.variantId,
+          productName: product.name,
+          variantName: productVariant.variantName,
+          slug: product.slug,
+          productImage: product.mainImage,
+          quantity: quantity,
+          originalPrice: productVariant.originalPrice,
+          discount: productVariant.discount,
+          discountPrice: productVariant.discountPrice,
+        });
+
+        const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+          return sum + item.discountPrice * item.quantity;
+        }, 0);
+        userCart.subTotal = Number(cartSubTotal.toFixed(2));
+        userCart.total = Number(cartSubTotal.toFixed(2));
+
+        await userCart.save();
+      }
+    } else {
+      /** Cart Product with No Variant */
+      const isItemAlreadyInCart = userCart.productCartList.find(
+        (item) => item.productId === itemId
+      );
+      if (isItemAlreadyInCart) {
+        return next(createHttpError(409, "Item in cart already existed!"));
+      } else {
+        const product = await ProductModel.findOne({ productId: itemId });
+
+        userCart.productCartList.push({
+          productId: itemId,
+          slug: product.slug,
+          productImage: product.mainImage,
+          quantity: quantity,
+          originalPrice: product.originalPrice,
+          discount: product.discount,
+          discountPrice: product.discountPrice,
+        });
+
+        const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+          return sum + item.discountPrice * item.quantity;
+        }, 0);
+        userCart.subTotal = Number(cartSubTotal.toFixed(2));
+        userCart.total = Number(cartSubTotal.toFixed(2));
+
+        await userCart.save();
+      }
+    }
+    res.status(201).json({ success: true });
+  } catch (error) {
+    console.error("error add in cart:", error);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
+const UpdateItemInCart = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { itemType, itemId, variantId, quantity, action } = req.body;
+
+    const userCart = await CartModel.findOne({ userId: userId });
+
+    if (itemType === "package") {
+      /** Cart Package */
+    } else if (itemType === "product" && variantId) {
+      /** Cart Product with Variant */
+      for (let i = 0; i < userCart.productCartList.length; i++) {
+        if (userCart.productCartList[i].variantId === variantId) {
+          if (action === "increment") {
+            userCart.productCartList[i].quantity += quantity;
+          } else {
+            if (quantity > userCart.productCartList[i].quantity) {
+              return next(createHttpError(409, "Item in cart not existed!"));
+            }
+            userCart.productCartList[i].quantity -= quantity;
+          }
+        }
+      }
+
+      const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+        return sum + item.discountPrice * item.quantity;
+      }, 0);
+      userCart.subTotal = Number(cartSubTotal.toFixed(2));
+      userCart.total = Number(cartSubTotal.toFixed(2));
+
+      await userCart.save();
+    } else {
+      /** Cart Product with no Variant */
+      for (let i = 0; i < userCart.productCartList.length; i++) {
+        if (userCart.productCartList[i].productId === itemId) {
+          if (action === "increment") {
+            userCart.productCartList[i].quantity += quantity;
+          } else {
+            if (quantity > userCart.productCartList[i].quantity) {
+              return next(createHttpError(409, "Item in cart not existed!"));
+            }
+            userCart.productCartList[i].quantity -= quantity;
+          }
+        }
+      }
+
+      const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+        return sum + item.discountPrice * item.quantity;
+      }, 0);
+      userCart.subTotal = Number(cartSubTotal.toFixed(2));
+      userCart.total = Number(cartSubTotal.toFixed(2));
+
+      await userCart.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      userCart: userCart,
+    });
+  } catch (error) {
+    console.error("error update in cart:", error);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+const DeleteItemInCart = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { itemType, itemId, variantId } = req.body;
+
+    const userCart = await CartModel.findOne({ userId: userId });
+
+    if (itemType === "package") {
+      /** Cart Package */
+    } else if (itemType === "product" && variantId) {
+      /** Cart Product with Variant */
+      const filterProductCartList = userCart.productCartList.filter(
+        (item) => item.variantId !== variantId
+      );
+
+      userCart.productCartList = filterProductCartList;
+
+      const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+        return sum + item.discountPrice * item.quantity;
+      }, 0);
+      userCart.subTotal = Number(cartSubTotal.toFixed(2));
+      userCart.total = Number(cartSubTotal.toFixed(2));
+
+      await userCart.save();
+    } else {
+      /** Cart Product with no Variant */
+      const filterProductCartList = userCart.productCartList.filter(
+        (item) => item.productId !== itemId
+      );
+
+      userCart.productCartList = filterProductCartList;
+
+      const cartSubTotal = userCart.productCartList.reduce((sum, item) => {
+        return sum + item.discountPrice * item.quantity;
+      }, 0);
+      userCart.subTotal = Number(cartSubTotal.toFixed(2));
+      userCart.total = Number(cartSubTotal.toFixed(2));
+
+      await userCart.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      userCart: userCart,
+    });
+  } catch (error) {
+    console.error("error update in cart:", error);
+    next(createHttpError(500, "Internal Server Error"));
+  }
+};
+
 export {
   RegisterUser,
   VERIFY_OTP,
@@ -770,4 +1011,8 @@ export {
   GET_PRIMARY_ADDRESS,
   GetProducts,
   GetSingleProduct,
+  GetCart,
+  AddItemInCart,
+  UpdateItemInCart,
+  DeleteItemInCart,
 };

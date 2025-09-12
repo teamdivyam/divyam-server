@@ -3,9 +3,12 @@ import rateLimit from "express-rate-limit";
 import authUser from "../middleware/authUser.js";
 import {
     ADD_NEW_ADDRESS,
+    AddItemInCart,
     DELETE_SINGLE_ADDRESS,
+    DeleteItemInCart,
     GET_ALL_ADDRESS,
     GET_PRIMARY_ADDRESS,
+    GetCart,
     GetProducts,
     GetSingleProduct,
     GUEST_USER,
@@ -14,6 +17,7 @@ import {
     SET_DEFAULT_ADDRESS,
     UPDATE_EXISTING_ADDRESS,
     UPDATE_PROFILE_PICTURE,
+    UpdateItemInCart,
     UpdateUser,
     USER_PRFOILE,
     VERIFY_OTP,
@@ -104,10 +108,14 @@ Route.post('/user/save-cart', isGuestUser, SAVE_CART);
 // Route.post('/auth',)
 
 // LOG-out-user
-Route.get('/logout', authUser, LOGOUT_USER)
+Route.get('/logout', authUser, LOGOUT_USER);
 
-Route.get('/products', GetProducts)
-Route.get('/products/:productSlug', GetSingleProduct)
+Route.get('/products', GetProducts);
+Route.get('/products/:productSlug', GetSingleProduct);
 
+Route.get('/cart', authUser, GetCart);
+Route.post('/cart', authUser, AddItemInCart);
+Route.patch('/cart', authUser, UpdateItemInCart);
+Route.delete('/cart', authUser, DeleteItemInCart);
 
 export default Route;

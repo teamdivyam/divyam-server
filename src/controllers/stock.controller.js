@@ -13,6 +13,7 @@ import {
   getTotalStocks,
 } from "../services/stock.js";
 import generateStockId from "../utils/generateStockID.js";
+import mongoose from "mongoose";
 
 const StockController = {
   getStock: async (req, res, next) => {
@@ -53,7 +54,7 @@ const StockController = {
         success: true,
         stock: stock,
         variantStock: variantStock,
-        totalQuantity: totalQuantity
+        totalQuantity: totalQuantity,
       });
     } catch (error) {
       console.error("error in getting single stock:", error);
@@ -354,7 +355,40 @@ const StockController = {
     }
   },
 
-  deleteStock: async (req, res, next) => {},
+  deleteSingleStock: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { sku } = req.params;
+
+      const stock = await StockModel.findOne({ sku });
+
+      // First delete it's variant stocks if any
+      await StockModel.deleteMany(
+        { parentProduct: stock._id },
+        { session }
+      );
+
+      const deletedStock = await StockModel.deleteOne({
+        sku,
+      }, { session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      if (deletedStock.deletedCount === 0) {
+        return res.status(404).send();
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("error in delete single stock:", error);
+      next(createHttpError(500, "Internal Server Error"));
+    }
+  },
 };
 
 export default StockController;

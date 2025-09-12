@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import slugify from "slugify";
 
 export const PRODUCT_CATEGORY = {
   COOKING: "COOKING",
@@ -21,18 +20,19 @@ const VariantSchema = new mongoose.Schema(
       ref: "Stock",
       required: true,
     },
-    sku: String,
+    variantId: { type: String, unique: true, required: true },
+    variantName: String,
+    originalPrice: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     discount: {
       type: Number,
       min: 0,
       default: 0,
     },
     discountPrice: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    originalPrice: {
       type: Number,
       min: 0,
       default: 0,
@@ -68,6 +68,16 @@ const ProductSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  category: {
+    type: String,
+    enum: Object.values(PRODUCT_CATEGORY),
+    default: PRODUCT_CATEGORY.OTHERS,
+  },
+  originalPrice: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
   discount: {
     type: Number,
     min: 0,
@@ -78,22 +88,12 @@ const ProductSchema = new mongoose.Schema({
     min: 0,
     default: 0,
   },
-  originalPrice: {
-    type: Number,
-    min: 0,
-    default: 0,
-  },
   mainImage: {
     type: String,
   },
   images: {
     type: [String],
     default: [],
-  },
-  category: {
-    type: String,
-    enum: Object.values(PRODUCT_CATEGORY),
-    default: PRODUCT_CATEGORY.OTHERS,
   },
   tags: {
     type: [String],

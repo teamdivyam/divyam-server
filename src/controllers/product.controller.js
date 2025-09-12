@@ -6,6 +6,8 @@ import { S3ClientConfig } from "../config/aws.js";
 import { v4 as uuidv4 } from "uuid";
 import generateProductID from "../utils/generateProductID.js";
 import slugify from "slugify";
+import generateVariantID from "../utils/generateVariantID.js";
+import StockModel from "../models/stock.model.js";
 
 const ProductController = {
   getProducts: async (req, res, next) => {
@@ -24,7 +26,6 @@ const ProductController = {
 
   createProduct: async (req, res, next) => {
     try {
-      console.log("body:", req.body);
       const {
         stock,
         sku,
@@ -43,9 +44,15 @@ const ProductController = {
       const slug = slugify(name, { lower: true, strict: true });
       const slugAlreadyExists = await ProductModel.findOne({ slug });
       if (slugAlreadyExists) {
-        return next(createHttpError(409, "Name already existed!"));
+        return next(
+          createHttpError(
+            409,
+            "Choose different product name. It's already exits!"
+          )
+        );
       }
 
+      // Validation Checking
       const { error, value: validatedData } = ProductSchema.validate(
         {
           stock,
@@ -62,18 +69,12 @@ const ProductController = {
         },
         { stripUnknown: true } // Remove Unknown Fields
       );
-
       if (error) {
-        // Create a detailed error message
         const errorMessage = error.details.map((detail) => ({
           field: detail.path.join("."),
           message: detail.message,
           type: detail.type,
         }));
-
-        console.log("Error message:", errorMessage);
-
-        // Send HTTP 400 error with validation details
         return next(
           createHttpError(400, "Validation failed", {
             errors: errorMessage,
@@ -81,19 +82,17 @@ const ProductController = {
         );
       }
 
+      // Store product images in S3
       let productImageURLs = [];
-
       if (req.files) {
         const uploadFilePromises = req.files.map(async (file) => {
           const key = `UI/product-Img/${uuidv4()}-${file.originalname}`;
-
           const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
             Key: key,
             Body: file.buffer,
             ContentType: file.mimetype,
           };
-
           const command = new PutObjectCommand(params);
           await S3ClientConfig.send(command);
 
@@ -101,16 +100,25 @@ const ProductController = {
         });
 
         const imageURLs = await Promise.all(uploadFilePromises);
-
         productImageURLs.push(...imageURLs);
       }
 
+      // Generate product id
       const productId = generateProductID();
 
+      // Generate variant id and store variant name
+      for (let i = 0; i < validatedData.variants.length; i++) {
+        const stock = await StockModel.findById(
+          validatedData.variants[i].stock
+        );
+        validatedData.variants[i].variantId = generateVariantID();
+        validatedData.variants[i].variantName = stock.name;
+      }
+
       await ProductModel.create({
-        stock: validatedData.stock,
         productId: productId,
         slug: slug,
+        stock: validatedData.stock,
         name: validatedData.name,
         description: validatedData.description,
         discount: validatedData.discount || validatedData.variants[0]?.discount,

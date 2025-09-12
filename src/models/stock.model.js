@@ -46,6 +46,11 @@ const StockSchema = new mongoose.Schema(
       sizeOrWeight: String,
       capacity: Number,
     },
+    attributes: {
+      unit: { type: String, enum: Object.values(UNITS) },
+      sizeOrWeight: String,
+      capacity: Number,
+    },
     remarks: {
       type: String,
     },
